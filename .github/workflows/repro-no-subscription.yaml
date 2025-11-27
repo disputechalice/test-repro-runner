@@ -4,6 +4,6 @@ on:
 
 jobs:
   call-build:
-    uses: ./repro-build-simple.yaml@main
+    uses: ./.github/workflows/repro-build-simple.yaml
     with:
       repo_url: https://github.com/free-pmx/free-pmx-no-subscription.git
