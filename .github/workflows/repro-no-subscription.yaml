@@ -1,0 +1,9 @@
+name: free-pmx-no-subscription
+on:
+  workflow_dispatch:
+
+jobs:
+  call-build:
+    uses: .github/workflows/repro-build-simple.yml
+    with:
+      repo_url: https://github.com/free-pmx/free-pmx-no-subscription.git
