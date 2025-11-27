@@ -7,8 +7,10 @@ on:
         type: string
 
 jobs:
-  build:
+  repro-checks:
+    name: "Repro Checks"
     runs-on: ubuntu-latest
+    container: debian:12
     steps:
       - name: Clone kit
         run: git clone --depth 1 https://github.com/${{ github.repository }}.git kit
