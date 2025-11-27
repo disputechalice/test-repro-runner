@@ -16,6 +16,6 @@ jobs:
         run: git clone --depth 1 ${{ inputs.repo_url }}
       - name: Build package
         run: |
-          cd $(basename ${{ inputs.repo_url }} .git)
+          cd $(basename ${{ inputs.url }} .git)
           chmod u+x ../kit/check-build-simple
           ../kit/check-build-simple
