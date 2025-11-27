@@ -10,9 +10,15 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - name: Clone self
+        run: git clone --depth 1 https://github.com/${{ github.repository }}.git kit
       - name: Clone repo
-        run: git clone ${{ inputs.repo_url }}
+        run: git clone --depth 1 ${{ inputs.repo_url }}
       - name: Build package
         run: |
           cd $(basename ${{ inputs.repo_url }} .git)
+          ls -la
+          cd ..
+          ls -la
+          cd kit
           ls -la
