@@ -1,0 +1,34 @@
+#!/bin/bash
+
+source "${BASH_SOURCE[0]%/*}"/util && init || exit 255
+
+[[ $CHECK_BUILD == "pass" ]]
+
+cat >&3 << EOF
+
+## Build reproducibility confirmed
+
+### Package
+*$DEB_PACKAGE*
+
+### Version
+*$DEB_VERSION*
+
+### Checksum SHA256
+
+$DEB_SHA256
+
+EOF
+
+[[ $CHECK_URL == "pass" ]]
+
+cat >&3 << EOF
+
+## Published package checksum verified
+
+### URL
+[$DEB_URL]($DEB_URL)
+
+*$CHECK_URL_LAST* Checksum matches that of the reproduced build.
+
+EOF
