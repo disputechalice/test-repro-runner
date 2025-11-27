@@ -1,0 +1,9 @@
+name: no-subscription
+on:
+  workflow_dispatch:
+
+jobs:
+  check-build:
+    uses: ./.github/workflows/check-build-simple.yaml
+    with:
+      url: https://github.com/free-pmx/free-pmx-no-subscription.git
