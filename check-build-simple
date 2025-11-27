@@ -34,32 +34,20 @@ read -r deb_package deb_version <<< "$(
 deb_fname="${deb_package}_${deb_version}.deb"
 mv -v "$tmp_deb" "$out_dir/$deb_fname"
 
-deb_info_fname="$deb_fname".info
-
 sha256sum --check <<< "$DEB_SHA256  $out_dir/$deb_fname"
 
-cat >&3 << EOF
-DEB=$out_dir/$deb_fname
-DEB_INFO=$out_dir/$deb_info_fname
-
-EOF
-
-cat >> "$out_dir/$deb_info_fname" << EOF
+tee "$out_dir/check-build-simple.out" >&3 << EOF
 GIT_URL=$GIT_URL
 GIT_COMMIT=$GIT_COMMIT
 GIT_REF=$GIT_REF
 
-EOF
+DEB=$out_dir/$deb_fname
 
-tee "$out_dir/$deb_info_fname" >&3 << EOF
 DEB_PACKAGE=$deb_package
 DEB_VERSION=$deb_version
 
 DEB_SHA256=$DEB_SHA256
 DEB_URL=$DEB_URL
 
-EOF
-
-cat >&3 << EOF
 CHECK_BUILD=pass
 EOF
