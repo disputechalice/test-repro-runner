@@ -24,19 +24,18 @@ jobs:
         run: |
           source kit/util
           req_apt git
-          git clone --depth 1 ${{ inputs.url }}
+          git clone --depth 1 ${{ inputs.url }} gitrepo
       - name: Check if build can be reproduced
         run: |
-          cd $(basename ${{ inputs.url }} .git)
-          ../kit/check-build-simple >> $GITHUB_ENV
+          kit/check-build-simple gitrepo >> $GITHUB_ENV
       - name: Check if published package checksum matches
         run: |
-          cd $(basename ${{ inputs.url }} .git)
+          cd gitrepo
           ../kit/check-url >> $GITHUB_ENV
       - name: Report
         if: always()
         run: |
-          cd $(basename ${{ inputs.url }} .git)
+          cd gitrepo
           ../kit/report >> $GITHUB_STEP_SUMMARY
       - name: Create working directory bundle artifact
         if: always()
