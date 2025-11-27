@@ -15,4 +15,4 @@ jobs:
       - name: Build package
         run: |
           cd $(basename ${{ inputs.repo_url }} .git)
-          # your build commands here
+          ls -la
