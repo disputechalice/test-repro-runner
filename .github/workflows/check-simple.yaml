@@ -6,6 +6,10 @@ on:
         required: true
         type: string
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   repro-checks:
     name: "Repro Checks"
