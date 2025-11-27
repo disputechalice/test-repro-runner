@@ -23,7 +23,7 @@ jobs:
       - name: Clone repo
         run: |
           source kit/util
-          req-apt git
+          req_apt git
           git clone --depth 1 ${{ inputs.url }}
       - name: Check if build can be reproduced
         run: |
