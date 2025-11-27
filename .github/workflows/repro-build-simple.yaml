@@ -1,0 +1,14 @@
+name: Build Repo
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone repo
+        run: git clone https://github.com/free-pmx/free-pmx-no-subscription.git
+      - name: Build package
+        run: |
+          cd $(basename ${{ inputs.repo_url }} .git)
+          ls -la
