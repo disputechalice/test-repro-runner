@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  check-build:
-    uses: ./.github/workflows/check-build-simple.yaml
+  check-repro:
+    uses: ./.github/workflows/check-simple.yaml
     with:
       url: https://github.com/free-pmx/free-pmx-no-subscription.git

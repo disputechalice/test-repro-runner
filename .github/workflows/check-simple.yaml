@@ -1,0 +1,36 @@
+name: Check Repo Build
+on:
+  workflow_call:
+    inputs:
+      url:
+        required: true
+        type: string
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone kit
+        run: git clone --depth 1 https://github.com/${{ github.repository }}.git kit
+      - name: Clone repo
+        run: git clone --depth 1 ${{ inputs.url }}
+      - name: Check if build can be reproduced
+        run: |
+          cd $(basename ${{ inputs.url }} .git)
+          ../kit/check-build-simple >> $GITHUB_ENV
+      - name: Check if published package checksum matches
+        run: |
+          cd $(basename ${{ inputs.url }} .git)
+          ../kit/check-url >> $GITHUB_ENV
+      - name: Report
+        if: always()
+        run: |
+          cd $(basename ${{ inputs.url }} .git)
+          ../kit/report >> $GITHUB_STEP_SUMMARY
+      - name: Create working directory bundle artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          path: .
+          include-hidden-files: true
+          retention-days: 1
