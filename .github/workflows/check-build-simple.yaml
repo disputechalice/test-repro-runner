@@ -1,8 +1,8 @@
-name: Build Repo
+name: Check Repo Build
 on:
   workflow_call:
     inputs:
-      repo_url:
+      url:
         required: true
         type: string
 
@@ -13,9 +13,8 @@ jobs:
       - name: Clone self
         run: git clone --depth 1 https://github.com/${{ github.repository }}.git kit
       - name: Clone repo
-        run: git clone --depth 1 ${{ inputs.repo_url }}
+        run: git clone --depth 1 ${{ inputs.url }}
       - name: Build package
         run: |
           cd $(basename ${{ inputs.url }} .git)
-          chmod u+x ../kit/check-build-simple
           ../kit/check-build-simple
