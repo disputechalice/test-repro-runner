@@ -1,9 +1,9 @@
-name: no-subscription
+name: Check no-subscription
 on:
   workflow_dispatch:
 
 jobs:
-  check-repro:
+  no-subscription:
     uses: ./.github/workflows/check-simple.yaml
     with:
       url: https://github.com/free-pmx/free-pmx-no-subscription.git

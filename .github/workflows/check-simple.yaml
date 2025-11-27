@@ -1,4 +1,4 @@
-name: Check Repo Build
+name: Check Simple
 on:
   workflow_call:
     inputs:
