@@ -1,14 +1,18 @@
 name: Build Repo
 on:
-  workflow_dispatch:
+  workflow_call:
+    inputs:
+      repo_url:
+        required: true
+        type: string
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Clone repo
-        run: git clone https://github.com/free-pmx/free-pmx-no-subscription.git
+        run: git clone ${{ inputs.repo_url }}
       - name: Build package
         run: |
-          cd $(basename "https://github.com/free-pmx/free-pmx-no-subscription.git" .git)
-          ls -la
+          cd $(basename ${{ inputs.repo_url }} .git)
+          # your build commands here
