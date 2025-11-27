@@ -17,8 +17,4 @@ jobs:
       - name: Build package
         run: |
           cd $(basename ${{ inputs.repo_url }} .git)
-          ls -la
-          cd ..
-          ls -la
-          cd kit
-          ls -la
+          bash -c ../kit/check-build-simple
