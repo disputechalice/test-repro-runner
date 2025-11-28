@@ -6,6 +6,6 @@ out_dir=$(pwd -P)
 repo_dir=${1:-$out_dir}
 repo_url=${2:?}
 
-req_repo "$repo_url" "$repo_dir"
+req_repo "$repo_dir" "$repo_url"
 req_permsrc "$repo_dir"
 req_buildmeta "$repo_dir"
