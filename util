@@ -28,7 +28,7 @@ req_buildmeta() {
 
     source "$buildmeta" || return 255
 
-    tee "buildmeta.out" >&3 << EOF
+    tee "buildmeta.out" >&2 << EOF
 SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH
 DPKG_DEB_COMPRESSOR_TYPE=$DPKG_DEB_COMPRESSOR_TYPE
 
