@@ -2,14 +2,15 @@
 
 source "${BASH_SOURCE[0]%/*}"/util && init || exit 255
 
+out_dir=${1:?}
+
 req_apt wget
 
 tmp_deb=$(mktemp "/tmp/$DEB_PACKAGE"_XXXXXX.deb)
 wget --no-verbose -O "$tmp_deb" "$DEB_URL"
 sha256sum --check <<< "$DEB_SHA256  $tmp_deb"
 
-cat >&3 << EOF
-CHECK_URL_LAST=$(date --rfc-3339=seconds --utc)
-
+tee "$out_dir/check-url.out" >&3 << EOF
+CHECK_URL_LAST="$(date --rfc-3339=seconds --utc)"
 CHECK_URL=pass
 EOF
