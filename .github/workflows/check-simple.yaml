@@ -31,8 +31,8 @@ jobs:
           cat gitrepo/check-build-simple.out >> $GITHUB_ENV
       - name: Check if published package checksum matches
         run: |
-          cd gitrepo
-          ../kit/check-url >> $GITHUB_ENV
+          kit/check-url gitrepo 
+          cat gitrepo/check-url.out >> $GITHUB_ENV
       - name: Report
         if: always()
         run: |
