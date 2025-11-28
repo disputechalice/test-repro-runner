@@ -6,8 +6,7 @@ out_dir=$(pwd -P)
 
 [[ $CHECK_BUILD == "pass" ]]
 
-tee "$out_dir/report.out" >&2 << EOF
-
+tee -a "$out_dir/report.out" >&2 << EOF
 ## Build reproducibility confirmed
 
 ### Package
@@ -19,12 +18,11 @@ tee "$out_dir/report.out" >&2 << EOF
 ### Checksum SHA256
 
 $DEB_SHA256
-
 EOF
 
 [[ $CHECK_URL == "pass" ]]
 
-tee "$out_dir/report.out" >&2 << EOF
+tee -a "$out_dir/report.out" >&2 << EOF
 
 ## Published package checksum verified
 
