@@ -32,13 +32,12 @@ jobs:
           cat check-build-simple.out >> $GITHUB_ENV
       - name: Check if published package checksum matches
         run: |
-          kit/check-url gitrepo 
-          cat gitrepo/check-url.out >> $GITHUB_ENV
+          kit/check-url
+          cat check-url.out >> $GITHUB_ENV
       - name: Report
         if: always()
         run: |
-          cd gitrepo
-          ../kit/report >> $GITHUB_STEP_SUMMARY
+          kit/report >> $GITHUB_STEP_SUMMARY
       - name: Create working directory bundle artifact
         if: always()
         uses: actions/upload-artifact@v4
