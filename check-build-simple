@@ -2,7 +2,7 @@
 
 source "${BASH_SOURCE[0]%/*}"/util && init || exit 255
 
-out_dir=${1:?}
+out_dir=$(pwd -P)
 repo_dir=${GIT_WORK_TREE:-$out_dir}
 
 found_buildmeta=("$repo_dir"/*.buildmeta)
