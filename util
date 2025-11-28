@@ -12,6 +12,14 @@ req_apt() {
     apt-get -qqo Dpkg::Use-Pty=0 satisfy "$@"
 }
 
+req_repo() {
+    [[ -n $1 ]] && declare repo_url=$1 || return 255
+    [[ -n $2 ]] && declare repo_dir=$2 || return 255
+
+    req_apt git
+    git clone --depth 1 "$repo_url" "$repo_dir"
+}
+
 req_permsrc() {
     [[ -n $1 ]] && declare repo_dir=$1 || return 255
 
@@ -43,5 +51,4 @@ DEB_URL=$DEB_URL
 DEB_PACKAGE=$package
 DEB_VERSION=$version
 EOF
-
 }

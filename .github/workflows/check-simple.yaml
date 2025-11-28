@@ -21,14 +21,10 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: kit
-      - name: Clone repo
+      - name: Prep build environment
         run: |
           source kit/util
-          req_apt git
-          git clone --depth 1 ${{ inputs.url }} gitrepo
-      - name: Prep repo
-        run: |
-          source kit/util
+          req_repo ${{ inputs.url }} gitrepo
           req_permsrc gitrepo
           req_buildmeta gitrepo
           cat buildmeta.out >> $GITHUB_ENV
