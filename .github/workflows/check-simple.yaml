@@ -28,16 +28,15 @@ jobs:
       - name: Check if build can be reproduced
         run: |
           kit/check-build-simple gitrepo
+          cat gitrepo/check-build-simple.out >> $GITHUB_ENV
       - name: Check if published package checksum matches
         run: |
           cd gitrepo
-          source check-build-simple.out
           ../kit/check-url >> $GITHUB_ENV
       - name: Report
         if: always()
         run: |
           cd gitrepo
-          source check-build-simple.out
           ../kit/report >> $GITHUB_STEP_SUMMARY
       - name: Create working directory bundle artifact
         if: always()
