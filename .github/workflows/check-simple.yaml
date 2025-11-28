@@ -15,7 +15,7 @@ jobs:
   repro-checks:
     name: "Repro Checks"
     runs-on: ubuntu-latest
-    container: debian:12
+    container: debian:13
     steps:
       - name: Clone kit
         uses: actions/checkout@v4
@@ -23,10 +23,7 @@ jobs:
           path: kit
       - name: Prep build environment
         run: |
-          source kit/util
-          req_repo ${{ inputs.url }} gitrepo
-          req_permsrc gitrepo
-          req_buildmeta gitrepo
+          kit/prep ${{ inputs.url }} gitrepo
           cat buildmeta.out >> $GITHUB_ENV
       - name: Check if build can be reproduced
         run: |
