@@ -13,8 +13,8 @@ req_apt() {
 }
 
 req_repo() {
-    [[ -n $1 ]] && declare repo_url=$1 || return 255
-    [[ -n $2 ]] && declare repo_dir=$2 || return 255
+    [[ -n $1 ]] && declare repo_dir=$1 || return 255
+    [[ -n $2 ]] && declare repo_url=$2 || return 255
 
     req_apt git
     git clone --depth 1 "$repo_url" "$repo_dir"

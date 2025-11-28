@@ -23,7 +23,7 @@ jobs:
           path: kit
       - name: Prep build environment
         run: |
-          kit/prep ${{ inputs.url }} gitrepo
+          kit/prep gitrepo ${{ inputs.url }}
           cat buildmeta.out >> $GITHUB_ENV
       - name: Check if build can be reproduced
         run: |
