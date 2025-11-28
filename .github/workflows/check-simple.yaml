@@ -27,8 +27,9 @@ jobs:
           git clone --depth 1 ${{ inputs.url }} gitrepo
       - name: Check if build can be reproduced
         run: |
-          kit/check-build-simple gitrepo
-          cat gitrepo/check-build-simple.out >> $GITHUB_ENV
+          export GIT_WORK_TREE=gitrepo
+          kit/check-build-simple
+          cat check-build-simple.out >> $GITHUB_ENV
       - name: Check if published package checksum matches
         run: |
           kit/check-url gitrepo 
