@@ -15,7 +15,13 @@ tee "$out_dir/report.out" >&2 << EOF
 ### Version
 *$DEB_VERSION*
 
-### Checksum SHA256
+### Source URL
+[$GIT_URL]($GIT_URL)
+
+### Source Git commit SHA
+$GIT_COMMIT
+
+### Package checksum SHA256
 
 $DEB_SHA256
 EOF
@@ -26,8 +32,8 @@ tee -a "$out_dir/report.out" >&2 << EOF
 
 ## Published package checksum verified
 
-### URL
+### Package URL
 [$DEB_URL]($DEB_URL)
 
-*$CHECK_URL_LAST* Checksum matches that of the reproduced build.
+**$CHECK_URL_LAST** Checksum matches that of the reproduced build.
 EOF
