@@ -1,4 +1,5 @@
 name: Check Simple
+
 on:
   workflow_call:
     inputs:
@@ -25,9 +26,10 @@ jobs:
           source kit/util
           req_apt git
           git clone --depth 1 ${{ inputs.url }} gitrepo
-      - name: Prep buildmeta
+      - name: Prep repo
         run: |
           source kit/util
+          req_permsrc gitrepo
           req_buildmeta gitrepo
           cat buildmeta.out >> $GITHUB_ENV
       - name: Check if build can be reproduced

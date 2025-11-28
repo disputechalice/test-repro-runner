@@ -12,6 +12,12 @@ req_apt() {
     apt-get -qqo Dpkg::Use-Pty=0 satisfy "$@"
 }
 
+req_permsrc() {
+    [[ -n $1 ]] && declare repo_dir=$1 || return 255
+
+    (cd "$repo_dir" && source .permsrc || exit 1)
+}
+
 req_buildmeta() {
     [[ -n $1 ]] && declare search_dir=$1 || return 255
 

@@ -6,6 +6,10 @@ out_dir=$(pwd -P)
 
 req_apt wget
 
+[[ -n $DEB_PACKAGE ]]
+[[ -n $DEB_SHA256 ]]
+[[ -n $DEB_URL ]]
+
 tmp_deb=$(mktemp "/tmp/$DEB_PACKAGE"_XXXXXX.deb)
 wget --no-verbose -O "$tmp_deb" "$DEB_URL"
 sha256sum --check <<< "$DEB_SHA256  $tmp_deb"

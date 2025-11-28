@@ -6,7 +6,7 @@ out_dir=$(pwd -P)
 
 [[ $CHECK_BUILD == "pass" ]]
 
-tee -a "$out_dir/report.out" >&2 << EOF
+tee "$out_dir/report.out" >&2 << EOF
 ## Build reproducibility confirmed
 
 ### Package
