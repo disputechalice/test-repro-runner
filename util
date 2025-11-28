@@ -21,7 +21,7 @@ req_repo() {
 
     tee "gitmeta.out" >&2 << EOF
 GIT_URL=$repo_url
-GIT_COMMIT=$(git --git-dir="$repo_dir".git --work-tree="$repo_dir" rev-parse HEAD)
+GIT_COMMIT=$(git --git-dir="$repo_dir"/.git --work-tree="$repo_dir" rev-parse HEAD)
 EOF
 }
 
