@@ -2,8 +2,7 @@
 
 source "${BASH_SOURCE[0]%/*}"/util && init || exit 255
 
-out_dir=$(pwd -P)
-repo_dir=${1:-$out_dir}
+repo_dir=${1:?}
 repo_url=${2:?}
 
 req_repo "$repo_dir" "$repo_url"
