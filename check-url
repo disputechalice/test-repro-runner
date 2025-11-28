@@ -2,7 +2,7 @@
 
 source "${BASH_SOURCE[0]%/*}"/util && init || exit 255
 
-out_dir=${1:?}
+ut_dir=$(pwd -P)
 
 req_apt wget
 
