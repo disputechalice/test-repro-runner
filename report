@@ -2,10 +2,11 @@
 
 source "${BASH_SOURCE[0]%/*}"/util && init || exit 255
 
+out_dir=$(pwd -P)
+
 [[ $CHECK_BUILD == "pass" ]]
 
-cat >&3 << EOF
-
+tee "$out_dir/report.md" >&3 << EOF
 ## Build reproducibility confirmed
 
 ### Package
@@ -30,5 +31,4 @@ cat >&3 << EOF
 [$DEB_URL]($DEB_URL)
 
 *$CHECK_URL_LAST* Checksum matches that of the reproduced build.
-
 EOF
