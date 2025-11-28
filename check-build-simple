@@ -3,7 +3,7 @@
 source "${BASH_SOURCE[0]%/*}"/util && init || exit 255
 
 out_dir=$(pwd -P)
-repo_dir=${GIT_WORK_TREE:-$out_dir}
+repo_dir=${1:-$out_dir}
 
 (cd "$repo_dir" && source .permsrc || exit 1)
 
@@ -28,7 +28,7 @@ mv -v "$tmp_deb" "$out_dir/$deb_fname"
 
 sha256sum --check <<< "$DEB_SHA256  $out_dir/$deb_fname"
 
-tee "$out_dir/check-build-simple.out" >&3 << EOF
+tee "$out_dir/check-build-simple.out" >&2 << EOF
 GIT_URL=$GIT_URL
 GIT_COMMIT=$GIT_COMMIT
 GIT_REF=$GIT_REF

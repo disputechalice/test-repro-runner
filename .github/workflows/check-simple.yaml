@@ -32,8 +32,7 @@ jobs:
           cat buildmeta.out >> $GITHUB_ENV
       - name: Check if build can be reproduced
         run: |
-          export GIT_WORK_TREE=gitrepo
-          kit/check-build-simple
+          kit/check-build-simple gitrepo
           cat check-build-simple.out >> $GITHUB_ENV
       - name: Check if published package checksum matches
         run: |
