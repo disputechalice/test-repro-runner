@@ -5,31 +5,23 @@ source "${BASH_SOURCE[0]%/*}"/util && init || exit 255
 out_dir=$(pwd -P)
 repo_dir=${GIT_WORK_TREE:-$out_dir}
 
-found_buildmeta=("$repo_dir"/*.buildmeta)
-((${#found_buildmeta[@]} == 1))
-buildmeta=${found_buildmeta[0]}
-[[ -f $buildmeta ]]
-buildmeta_fname=${buildmeta##*/}
-
-target="${buildmeta_fname%%.buildmeta}"
-package=${target%%_*}
-version=${target#*_}
-
 (cd "$repo_dir" && source .permsrc || exit 1)
 
-source "$buildmeta"
-export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
+[[ -n $DEB_PACKAGE ]]
+[[ -n $SOURCE_DATE_EPOCH ]]
 
-tmp_deb=$(mktemp "$package"_XXXXXX.deb)
-dpkg-deb --build --root-owner-group "$repo_dir/$package" "$tmp_deb"
+declare -x SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
+
+tmp_deb=$(mktemp "$DEB_PACKAGE"_XXXXXX.deb)
+dpkg-deb --build --root-owner-group "$repo_dir/$DEB_PACKAGE" "$tmp_deb"
 
 read -r deb_package deb_version <<< "$(
     dpkg-deb --show --showformat='${Package} ${Version}\n' \
         "$tmp_deb"
 )"
 
-[[ $package == "$deb_package" ]]
-[[ $version == "$deb_version" ]]
+[[ $DEB_PACKAGE == "$deb_package" ]]
+[[ $DEB_VERSION == "$deb_version" ]]
 
 deb_fname="${deb_package}_${deb_version}.deb"
 mv -v "$tmp_deb" "$out_dir/$deb_fname"
@@ -42,12 +34,6 @@ GIT_COMMIT=$GIT_COMMIT
 GIT_REF=$GIT_REF
 
 DEB=$out_dir/$deb_fname
-
-DEB_PACKAGE=$deb_package
-DEB_VERSION=$deb_version
-
-DEB_SHA256=$DEB_SHA256
-DEB_URL=$DEB_URL
 
 CHECK_BUILD=pass
 EOF

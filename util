@@ -12,3 +12,31 @@ req_apt() {
     apt-get -qq update
     apt-get -qqo Dpkg::Use-Pty=0 satisfy "$@"
 }
+
+req_buildmeta() {
+    [[ -n $1 ]] && declare search_dir=$1 || return 255
+
+    found_buildmeta=("$search_dir"/*.buildmeta)
+    ((${#found_buildmeta[@]} == 1))
+    buildmeta=${found_buildmeta[0]}
+    [[ -f $buildmeta ]]
+    buildmeta_fname=${buildmeta##*/}
+
+    target="${buildmeta_fname%%.buildmeta}"
+    package=${target%%_*}
+    version=${target#*_}
+
+    source "$buildmeta" || return 255
+
+    tee "buildmeta.out" >&3 << EOF
+SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH
+DPKG_DEB_COMPRESSOR_TYPE=$DPKG_DEB_COMPRESSOR_TYPE
+
+DEB_SHA256=$DEB_SHA256
+DEB_URL=$DEB_URL
+
+DEB_PACKAGE=$package
+DEB_VERSION=$version
+EOF
+
+}

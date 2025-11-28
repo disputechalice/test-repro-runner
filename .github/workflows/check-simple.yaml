@@ -25,6 +25,11 @@ jobs:
           source kit/util
           req_apt git
           git clone --depth 1 ${{ inputs.url }} gitrepo
+      - name: Prep buildmeta
+        run: |
+          source kit/util
+          req_buildmeta gitrepo
+          cat buildmeta.out >> $GITHUB_ENV
       - name: Check if build can be reproduced
         run: |
           export GIT_WORK_TREE=gitrepo
