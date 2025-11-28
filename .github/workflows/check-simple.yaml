@@ -1,4 +1,4 @@
-name: Check Simple
+name: (check simple)
 
 on:
   workflow_call:
@@ -13,7 +13,7 @@ defaults:
 
 jobs:
   repro-checks:
-    name: "Repro Checks"
+    name: repro checks
     runs-on: ubuntu-latest
     container: debian:13
     steps:
