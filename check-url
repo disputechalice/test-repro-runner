@@ -11,6 +11,6 @@ wget --no-verbose -O "$tmp_deb" "$DEB_URL"
 sha256sum --check <<< "$DEB_SHA256  $tmp_deb"
 
 tee "$out_dir/check-url.out" >&3 << EOF
-CHECK_URL_LAST="$(date --rfc-3339=seconds --utc)"
+CHECK_URL_LAST=$(date --rfc-3339=seconds --utc)
 CHECK_URL=pass
 EOF
