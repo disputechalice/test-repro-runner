@@ -28,9 +28,5 @@ mv -v "$tmp_deb" "$out_dir/$deb_fname"
 sha256sum --check <<< "$DEB_SHA256  $out_dir/$deb_fname"
 
 tee "$out_dir/check-build-simple.out" >&2 << EOF
-GIT_URL=$GIT_URL
-GIT_COMMIT=$GIT_COMMIT
-GIT_REF=$GIT_REF
-
 CHECK_BUILD=pass
 EOF
