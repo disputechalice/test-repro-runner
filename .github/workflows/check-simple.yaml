@@ -37,7 +37,8 @@ jobs:
       - name: Report
         if: always()
         run: |
-          kit/report >> $GITHUB_STEP_SUMMARY
+          kit/report
+          cat report.out >> $GITHUB_STEP_SUMMARY
       - name: Create working directory bundle artifact
         if: always()
         uses: actions/upload-artifact@v4
