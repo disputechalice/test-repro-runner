@@ -61,12 +61,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: kit-archive.tar.gz
-          path: .
+          path: kit
       - name: Download repo archive
         uses: actions/download-artifact@v4
         with:
           name: repo-archive.tar.gz
-          path: .
+          path: repo
       - name: Extract repo
         run: tar -xzf repo-archive.tar.gz
       - name: Prep build environment
