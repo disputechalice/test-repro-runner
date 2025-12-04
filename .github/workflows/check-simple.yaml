@@ -127,24 +127,24 @@ jobs:
           kit/check-url
           cat check-url.out >> $GITHUB_ENV
 
-report:
-  name: Generate report
-  runs-on: ubuntu-latest
-  needs: [build, url-check]
-  steps:
-    - name: Download kit archive
-      uses: actions/download-artifact@v4
-      with:
-        name: kit-archive
-        path: .
+  report:
+    name: Generate report
+    runs-on: ubuntu-latest
+    needs: [build, url-check]
+    steps:
+      - name: Download kit archive
+        uses: actions/download-artifact@v4
+        with:
+          name: kit-archive
+          path: .
 
-    - uses: actions/download-artifact@v4
-      with:
-        name: env-checkout-repo
-        path: ./env
+      - uses: actions/download-artifact@v4
+        with:
+          name: env-checkout-repo
+          path: ./env
 
-    - name: Run report
-      run: |
-        for f in env/*.env; do source "$f"; done      
-        kit/report
-        cat report.out >> $GITHUB_STEP_SUMMARY
+      - name: Run report
+        run: |
+          for f in env/*.env; do source "$f"; done      
+          kit/report
+          cat report.out >> $GITHUB_STEP_SUMMARY
