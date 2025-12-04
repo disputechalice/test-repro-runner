@@ -47,17 +47,24 @@ jobs:
           git clone --no-checkout --depth 1 \
             ${{ inputs.url }} \
             gitrepo
+
           cd gitrepo
           git fetch --depth 1 origin ${{ inputs.ref }}
           git checkout ${{ inputs.ref }}
           git archive --prefix=gitrepo/ --format=tar -o ../gitrepo-archive.tar ${{ inputs.ref }}
 
-          mkdir -p ../env
+          cd ..
 
-          tee ../env/gitsource.env >&2 << EOF
-            GIT_URL=$(git remote get-url origin)
-            GIT_COMMIT=$(git --git-dir=.git --work-tree=. rev-parse HEAD)
+          mkdir -p env
+
+          tee env/gitsource.env >&2 << EOF
+            GIT_URL=$(git --git-dir=gitrepo/.git --work-tree=gitrepo \
+              remote get-url origin)
+            GIT_COMMIT=$(git --git-dir=gitrepo/.git --work-tree=gitrepo \
+              rev-parse HEAD)
           EOF
+
+          kit/prep gitrepo
 
       - name: Upload archive artifact
         uses: actions/upload-artifact@v4
@@ -95,15 +102,12 @@ jobs:
         run: |
           tar -xf kit-archive.tar
           tar -xf gitrepo-archive.tar
-      - name: Prep build environment
-        run: |
-          kit/prep gitrepo
-          cat gitrepo/gitmeta.out >> $GITHUB_ENV
-          cat gitrepo/buildmeta.out >> $GITHUB_ENV
       - name: Check if build can be reproduced
         run: |
+          kit/prep gitrepo
+          source gitrepo/buildmeta.out
+
           kit/check-build-simple gitrepo
-          cat check-build-simple.out >> $GITHUB_ENV
 
   url-check:
     name: Check published package URL

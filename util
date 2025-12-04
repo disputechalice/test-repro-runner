@@ -25,7 +25,7 @@ req_buildmeta() {
 
     source "$buildmeta" || return 255
 
-    tee "buildmeta.out" >&2 << EOF
+    tee "env/build.env" >&2 << EOF
 DEB_PACKAGE=$package
 DEB_VERSION=$version
 
