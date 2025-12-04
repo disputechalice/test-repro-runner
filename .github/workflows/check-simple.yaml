@@ -29,7 +29,7 @@ jobs:
           cd kit
           git fetch --depth=1 origin "$GITHUB_SHA"
           git checkout "$GITHUB_SHA"
-          git archive --format=tar.gz -o ../kit-archive.tar.gz HEAD
+          git archive --format=tar -o ../kit-archive.tar "$GITHUB_SHA"
 
       - name: Source repos
         run: |
@@ -37,7 +37,7 @@ jobs:
           cd gitrepo
           git fetch --depth 1 origin ${{ inputs.ref }}
           git checkout ${{ inputs.ref }}
-          git archive --format=tar.gz -o ../gitrepo-archive.tar.gz ${{ inputs.ref }}
+          git archive --format=tar -o ../gitrepo-archive.tar ${{ inputs.ref }}
 
       - name: Upload kit archive
         uses: actions/upload-artifact@v4
