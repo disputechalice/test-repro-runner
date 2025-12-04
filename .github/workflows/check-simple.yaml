@@ -29,7 +29,7 @@ jobs:
           cd kit
           git fetch --depth=1 origin "$GITHUB_SHA"
           git checkout "$GITHUB_SHA"
-          git archive --format=tar -o ../kit-archive.tar "$GITHUB_SHA"
+          git archive --prefix=kit/ --format=tar -o ../kit-archive.tar "$GITHUB_SHA"
 
       - name: Source repos
         run: |
@@ -37,7 +37,7 @@ jobs:
           cd gitrepo
           git fetch --depth 1 origin ${{ inputs.ref }}
           git checkout ${{ inputs.ref }}
-          git archive --format=tar -o ../gitrepo-archive.tar ${{ inputs.ref }}
+          git archive --prefix=gitrepo/ --format=tar -o ../gitrepo-archive.tar ${{ inputs.ref }}
 
       - name: Upload kit archive
         uses: actions/upload-artifact@v4
@@ -69,8 +69,8 @@ jobs:
           path: .
       - name: Extract kit & repo
         run: |
-          tar -xf kit-archive.tar -C kit
-          tar -xf gitrepo-archive.tar -C gitrepo
+          tar -xf kit-archive.tar
+          tar -xf gitrepo-archive.tar
           ls -la
       - name: Prep build environment
         run: |
@@ -112,8 +112,8 @@ jobs:
           path: .
       - name: Extract repo
         run: |
-          tar -xzf kit-archive.tar -C kit
-          tar -xzf gitrepo-archive.tar -C gitrepo
+          tar -xzf kit-archive.tar
+          tar -xzf gitrepo-archive.tar
       - name: Check if published package checksum matches
         run: |
           kit/check-url
