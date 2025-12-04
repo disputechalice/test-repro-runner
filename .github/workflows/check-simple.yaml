@@ -24,10 +24,10 @@ jobs:
       GIT_COMMIT: ${{ inputs.ref }}
     steps:
 
-      - name: Check kit
+      - name: Checkout kit repo
         run: |
           git clone --no-checkout --depth 1 \
-            https://github.com/${GITHUB_REPOSITORY}.git \
+            https://github.com/"$GITHUB_REPOSITORY".git \
             kit
           cd kit
           git fetch --depth=1 origin "$GITHUB_SHA"
@@ -42,7 +42,7 @@ jobs:
           include-hidden-files: true
           retention-days: 1
 
-      - name: Source repo
+      - name: Checkout source repo
         run: |
           git clone --no-checkout --depth 1 \
             ${{ inputs.url }} \
@@ -53,8 +53,16 @@ jobs:
           git checkout ${{ inputs.ref }}
           git archive --prefix=gitrepo/ --format=tar -o ../gitrepo-archive.tar ${{ inputs.ref }}
 
-          cd ..
+      - name: Upload archive artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitrepo-archive
+          path: gitrepo-archive.tar
+          include-hidden-files: true
+          retention-days: 1
 
+      - name: Prep environment
+        run: |
           mkdir -p env
 
           tee env/gitsource.env >&2 << EOF
@@ -66,15 +74,7 @@ jobs:
 
           kit/prep gitrepo
 
-      - name: Upload archive artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: gitrepo-archive
-          path: gitrepo-archive.tar
-          include-hidden-files: true
-          retention-days: 1
-
-      - name: Upload gitsource environment
+      - name: Upload environment
         uses: actions/upload-artifact@v4
         with:
           name: checkout-repo-env
@@ -83,7 +83,7 @@ jobs:
           retention-days: 1
 
   build:  
-    name: Build artifact
+    name: Repro build
     runs-on: ubuntu-latest
     container: ghcr.io/disputechalice/builder-simple:latest
     needs: checkout-repo
@@ -98,15 +98,18 @@ jobs:
         with:
           name: gitrepo-archive
           path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: checkout-repo-env
+          path: ./env
+
       - name: Extract kit & repo
         run: |
           tar -xf kit-archive.tar
           tar -xf gitrepo-archive.tar
       - name: Check if build can be reproduced
         run: |
-          mkdir -p env
-
-          kit/prep gitrepo
           source env/build.env
           export DEB_{PACKAGE,VERSION,SHA256} \
             SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
@@ -128,6 +131,12 @@ jobs:
         with:
           name: gitrepo-archive
           path: .
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: checkout-repo-env
+          path: ./env
+
       - name: Extract repo
         run: |
           tar -xf kit-archive.tar
