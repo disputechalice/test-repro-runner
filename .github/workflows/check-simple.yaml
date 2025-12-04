@@ -19,41 +19,59 @@ jobs:
   checkout-repo:
     name: Checkout repository
     runs-on: ubuntu-latest
-    outputs:
-      archive-artifact-name: repo-archive.tar.gz
+    env:
+      GIT_URL: ${{ inputs.url }}
+      GIT_COMMIT: ${{ inputs.ref }}
     steps:
 
       - name: Check kit
         run: |
-          git clone --no-checkout --depth 1 https://github.com/${GITHUB_REPOSITORY}.git kit
+          git clone --no-checkout --depth 1 \
+            https://github.com/${GITHUB_REPOSITORY}.git \
+            kit
           cd kit
           git fetch --depth=1 origin "$GITHUB_SHA"
           git checkout "$GITHUB_SHA"
           git archive --prefix=kit/ --format=tar -o ../kit-archive.tar "$GITHUB_SHA"
-
-      - name: Source repos
-        run: |
-          git clone --no-checkout --depth 1 ${{ inputs.url }} gitrepo
-          cd gitrepo
-          git fetch --depth 1 origin ${{ inputs.ref }}
-          git checkout ${{ inputs.ref }}
-          tee gitmeta.out >&2 << EOF
-            GIT_URL=${{ inputs.url }}
-            GIT_COMMIT=$(git --git-dir=.git --work-tree=. rev-parse HEAD)
-          EOF
-          git archive --prefix=gitrepo/ --format=tar -o ../gitrepo-archive.tar ${{ inputs.ref }}
 
       - name: Upload kit archive
         uses: actions/upload-artifact@v4
         with:
           name: kit-archive
           path: kit-archive.tar
+          include-hidden-files: true
+          retention-days: 1
+
+      - name: Source repo
+        run: |
+          git clone --no-checkout --depth 1 \
+            ${{ inputs.url }} \
+            gitrepo
+          cd gitrepo
+          git fetch --depth 1 origin ${{ inputs.ref }}
+          git checkout ${{ inputs.ref }}
+          git archive --prefix=gitrepo/ --format=tar -o ../gitrepo-archive.tar ${{ inputs.ref }}
+
+          tee gitsource.env >&2 << EOF
+            GIT_URL=$(git remote get-url origin)
+            GIT_COMMIT=$(git --git-dir=.git --work-tree=. rev-parse HEAD)
+          EOF
 
       - name: Upload archive artifact
         uses: actions/upload-artifact@v4
         with:
           name: gitrepo-archive
           path: gitrepo-archive.tar
+          include-hidden-files: true
+          retention-days: 1
+
+      - name: Upload gitsource environment
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkout-repo-env
+          path: gitsource.env
+          include-hidden-files: true
+          retention-days: 1
 
   build:  
     name: Build artifact
@@ -75,29 +93,15 @@ jobs:
         run: |
           tar -xf kit-archive.tar
           tar -xf gitrepo-archive.tar
-          ls -la
       - name: Prep build environment
         run: |
           kit/prep gitrepo
           cat gitrepo/gitmeta.out >> $GITHUB_ENV
-          cat buildmeta.out >> $GITHUB_ENV
+          cat gitrepo/buildmeta.out >> $GITHUB_ENV
       - name: Check if build can be reproduced
         run: |
           kit/check-build-simple gitrepo
           cat check-build-simple.out >> $GITHUB_ENV
-      - name: Report
-        if: always()
-        run: |
-          kit/report
-          cat report.out >> $GITHUB_STEP_SUMMARY
-      - name: Upload working directory bundle
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-output
-          path: .
-          include-hidden-files: true
-          retention-days: 1
 
   url-check:
     name: Check published package URL
@@ -122,3 +126,25 @@ jobs:
         run: |
           kit/check-url
           cat check-url.out >> $GITHUB_ENV
+
+report:
+  name: Generate report
+  runs-on: ubuntu-latest
+  needs: [build, url-check]
+  steps:
+    - name: Download kit archive
+      uses: actions/download-artifact@v4
+      with:
+        name: kit-archive
+        path: .
+
+    - uses: actions/download-artifact@v4
+      with:
+        name: env-checkout-repo
+        path: ./env
+
+    - name: Run report
+      run: |
+        for f in env/*.env; do source "$f"; done      
+        kit/report
+        cat report.out >> $GITHUB_STEP_SUMMARY
