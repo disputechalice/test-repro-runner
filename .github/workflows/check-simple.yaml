@@ -43,13 +43,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: kit-archive
-          path: kit-archive.tar.gz
+          path: kit-archive.tar
 
       - name: Upload archive artifact
         uses: actions/upload-artifact@v4
         with:
           name: gitrepo-archive
-          path: gitrepo-archive.tar.gz
+          path: gitrepo-archive.tar
 
   build:  
     name: Build artifact
