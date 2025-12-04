@@ -7,3 +7,4 @@ jobs:
     uses: ./.github/workflows/check-simple.yaml
     with:
       url: https://github.com/free-pmx/free-pmx-no-subscription.git
+      ref: main
