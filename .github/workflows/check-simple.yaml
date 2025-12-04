@@ -78,8 +78,7 @@ jobs:
           ls -la
       - name: Prep build environment
         run: |
-          kit/prep gitrepo ${{ inputs.url }}
-          cat gitmeta.out >> $GITHUB_ENV
+          kit/prep gitrepo
           cat buildmeta.out >> $GITHUB_ENV
       - name: Check if build can be reproduced
         run: |
