@@ -104,8 +104,10 @@ jobs:
           tar -xf gitrepo-archive.tar
       - name: Check if build can be reproduced
         run: |
+          mkdir -p env
+
           kit/prep gitrepo
-          source gitrepo/buildmeta.out
+          source env/build.env
 
           kit/check-build-simple gitrepo
 
