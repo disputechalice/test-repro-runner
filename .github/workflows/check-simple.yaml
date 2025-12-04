@@ -28,7 +28,7 @@ jobs:
         uses: disputechalice/test-gh-actions/checkout-archive@main
         with:
           repo: https://github.com/"$GITHUB_REPOSITORY".git
-          sha: main
+          ref: main
           dir: kit
 
       - name: List archive
@@ -46,7 +46,7 @@ jobs:
         uses: disputechalice/test-gh-actions/checkout-archive@main
         with:
           repo: ${{ inputs.url }}
-          sha: ${{ inputs.ref }}
+          ref: ${{ inputs.ref }}
           dir: gitrepo
 
       - name: Upload source archive
