@@ -51,12 +51,17 @@ jobs:
           name: repo-archive.tar.gz
           path: repo-archive.tar.gz
 
-  build:
+  build:  
     name: Build artifact
     runs-on: ubuntu-latest
     container: ghcr.io/disputechalice/builder-simple:latest
     needs: checkout-repo
     steps:
+      - name: Download kit archive
+        uses: actions/download-artifact@v4
+        with:
+          name: kit-archive.tar.gz
+          path: .
       - name: Download repo archive
         uses: actions/download-artifact@v4
         with:
@@ -92,6 +97,11 @@ jobs:
     runs-on: ubuntu-latest
     needs: checkout-repo
     steps:
+      - name: Download kit archive
+        uses: actions/download-artifact@v4
+        with:
+          name: kit-archive.tar.gz
+          path: .
       - name: Download repo archive
         uses: actions/download-artifact@v4
         with:
