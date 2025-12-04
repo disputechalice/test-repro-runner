@@ -99,20 +99,14 @@ jobs:
     runs-on: ubuntu-latest
     needs: checkout-repo
     steps:
-      - name: Download kit archive
-        uses: actions/download-artifact@v4
-        with:
-          name: kit-archive
-          path: .
+      - name: Prep
+        uses: disputechalice/test-gh-actions/prep@main
 
       - uses: actions/download-artifact@v4
         with:
           name: checkout-repo-env
           path: ./env
 
-      - name: Extract repo
-        run: |
-          tar -xf kit-archive.tar
       - name: Check if published package checksum matches
         run: |
           source env/build.env
