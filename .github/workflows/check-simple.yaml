@@ -33,8 +33,8 @@ jobs:
 
       - name: Source repos
         run: |
-          git clone --no-checkout --depth 1 ${{ inputs.url }} repo
-          cd repo
+          git clone --no-checkout --depth 1 ${{ inputs.url }} gitrepo
+          cd gitrepo
           git fetch --depth 1 origin ${{ inputs.ref }}
           git checkout ${{ inputs.ref }}
           git archive --format=tar.gz -o ../repo-archive.tar.gz ${{ inputs.ref }}
