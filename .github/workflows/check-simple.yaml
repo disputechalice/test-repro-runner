@@ -38,7 +38,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: kit-archive
-          path: kit-archive.tar
+          path: kit.tar
           include-hidden-files: true
           retention-days: 1
 
@@ -53,7 +53,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: gitrepo-archive
-          path: gitrepo-archive.tar
+          path: gitrepo.tar
           include-hidden-files: true
           retention-days: 1
 
@@ -132,7 +132,7 @@ jobs:
           path: .
       - name: Extract kit
         run: |
-          tar -xf kit-archive.tar
+          tar -xf kit.tar
 
       - name: Download environment
         uses: actions/download-artifact@v4
