@@ -143,6 +143,9 @@ jobs:
           tar -xf gitrepo-archive.tar
       - name: Check if published package checksum matches
         run: |
+          source env/build.env
+          export DEB{PACKAGE,DEB_SHA256,DEB_URL}
+
           kit/check-url
           cat check-url.out >> $GITHUB_ENV
 
