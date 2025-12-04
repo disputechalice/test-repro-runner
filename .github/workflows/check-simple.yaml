@@ -15,13 +15,23 @@ defaults:
     shell: bash
 
 jobs:
+
   checkout-repo:
     name: Checkout repository
     runs-on: ubuntu-latest
     outputs:
       archive-artifact-name: repo-archive.tar.gz
     steps:
-      - name: Clone repository
+
+      - name: Check kit
+        run: |
+          git clone https://github.com/${GITHUB_REPOSITORY}.git kit
+          cd kit
+          git fetch --depth=1 origin "$GITHUB_SHA"
+          git checkout "$GITHUB_SHA"
+          git archive --format=tar.gz -o kit-archive.tar.gz HEAD:kit
+
+      - name: Source repos
         run: |
           git clone --no-checkout --depth 1 ${{ inputs.url }} repo
           cd repo
@@ -30,6 +40,12 @@ jobs:
 
           # Create a clean archive
           git archive --format=tar.gz -o ../repo-archive.tar.gz ${{ inputs.ref }}
+
+      - name: Upload kit archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: kit-archive.tar.gz
+          path: kit-archive.tar.gz
 
       - name: Upload archive artifact
         uses: actions/upload-artifact@v4
