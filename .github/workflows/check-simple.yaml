@@ -37,7 +37,7 @@ jobs:
           cd gitrepo
           git fetch --depth 1 origin ${{ inputs.ref }}
           git checkout ${{ inputs.ref }}
-          tee "gitmeta.out" >&2 << EOF
+          tee ../"gitmeta.out" >&2 << EOF
             GIT_URL=${{ inputs.url }}
             GIT_COMMIT=$(git --git-dir=.git --work-tree=. rev-parse HEAD)
           EOF
@@ -79,6 +79,7 @@ jobs:
       - name: Prep build environment
         run: |
           kit/prep gitrepo
+          cat gitmeta.out >> $GITHUB_ENV
           cat buildmeta.out >> $GITHUB_ENV
       - name: Check if build can be reproduced
         run: |
