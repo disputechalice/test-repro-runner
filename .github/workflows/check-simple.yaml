@@ -108,6 +108,8 @@ jobs:
 
           kit/prep gitrepo
           source env/build.env
+          export DEB_{PACKAGE,VERSION,SHA256} \
+            SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
 
           kit/check-build-simple gitrepo
 

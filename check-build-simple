@@ -6,8 +6,10 @@ out_dir=$(pwd -P)
 repo_dir=${1:-$out_dir}
 
 [[ -n $DEB_PACKAGE ]]
+[[ -n $DEB_VERSION ]]
 [[ -n $DEB_SHA256 ]]
 [[ -n $SOURCE_DATE_EPOCH ]]
+[[ -n $DPKG_DEB_COMPRESSOR_TYPE ]]
 
 declare -x SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
 
