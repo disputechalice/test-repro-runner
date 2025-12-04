@@ -144,7 +144,7 @@ jobs:
       - name: Check if published package checksum matches
         run: |
           source env/build.env
-          export DEB{PACKAGE,SHA256,URL}
+          export DEB_{PACKAGE,SHA256,URL}
 
           kit/check-url
           cat check-url.out >> $GITHUB_ENV
