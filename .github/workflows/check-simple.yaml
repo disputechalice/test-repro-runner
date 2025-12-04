@@ -88,9 +88,10 @@ jobs:
     container: ghcr.io/disputechalice/builder-simple:latest
     needs: checkout-repo
     steps:
+      - name: Checkout kit
+        uses: actions/checkout@v4
       - name: Prep
-        uses: ./.github/actions/prep
-
+        uses: disputechalice/test-gh-actions/prep@main
       - name: Check if build can be reproduced
         run: |
           source env/build.env
