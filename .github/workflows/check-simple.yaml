@@ -1,9 +1,12 @@
-name: (check simple)
+name: repro-checks
 
 on:
   workflow_call:
     inputs:
       url:
+        required: true
+        type: string
+      ref:
         required: true
         type: string
 
@@ -12,15 +15,41 @@ defaults:
     shell: bash
 
 jobs:
-  repro-checks:
-    name: repro checks
+  checkout-repo:
+    name: Checkout repository
+    runs-on: ubuntu-latest
+    outputs:
+      archive-artifact-name: repo-archive.tar.gz
+    steps:
+      - name: Clone repository
+        run: |
+          git clone --no-checkout --depth 1 ${{ inputs.url }} repo
+          cd repo
+          git fetch --depth 1 origin ${{ inputs.ref }}
+          git checkout ${{ inputs.ref }}
+
+          # Create a clean archive
+          git archive --format=tar.gz -o ../repo-archive.tar.gz ${{ inputs.ref }}
+
+      - name: Upload archive artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: repo-archive.tar.gz
+          path: repo-archive.tar.gz
+
+  build:
+    name: Build artifact
     runs-on: ubuntu-latest
     container: ghcr.io/disputechalice/builder-simple:latest
+    needs: checkout-repo
     steps:
-      - name: Clone kit
-        uses: actions/checkout@v4
+      - name: Download repo archive
+        uses: actions/download-artifact@v4
         with:
-          path: kit
+          name: repo-archive.tar.gz
+          path: .
+      - name: Extract repo
+        run: tar -xzf repo-archive.tar.gz
       - name: Prep build environment
         run: |
           kit/prep gitrepo ${{ inputs.url }}
@@ -30,19 +59,33 @@ jobs:
         run: |
           kit/check-build-simple gitrepo
           cat check-build-simple.out >> $GITHUB_ENV
-      - name: Check if published package checksum matches
-        run: |
-          kit/check-url
-          cat check-url.out >> $GITHUB_ENV
       - name: Report
         if: always()
         run: |
           kit/report
           cat report.out >> $GITHUB_STEP_SUMMARY
-      - name: Create working directory bundle artifact
+      - name: Upload working directory bundle
         if: always()
         uses: actions/upload-artifact@v4
         with:
+          name: build-output
           path: .
           include-hidden-files: true
           retention-days: 1
+
+  url-check:
+    name: Check published package URL
+    runs-on: ubuntu-latest
+    needs: checkout-repo
+    steps:
+      - name: Download repo archive
+        uses: actions/download-artifact@v4
+        with:
+          name: repo-archive.tar.gz
+          path: .
+      - name: Extract repo
+        run: tar -xzf repo-archive.tar.gz
+      - name: Check if published package checksum matches
+        run: |
+          kit/check-url
+          cat check-url.out >> $GITHUB_ENV
