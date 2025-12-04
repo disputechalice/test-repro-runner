@@ -37,7 +37,7 @@ jobs:
           cd gitrepo
           git fetch --depth 1 origin ${{ inputs.ref }}
           git checkout ${{ inputs.ref }}
-          git archive --format=tar.gz -o ../repo-archive.tar.gz ${{ inputs.ref }}
+          git archive --format=tar.gz -o ../gitrepo-archive.tar.gz ${{ inputs.ref }}
 
       - name: Upload kit archive
         uses: actions/upload-artifact@v4
