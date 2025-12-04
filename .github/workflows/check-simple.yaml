@@ -34,28 +34,12 @@ jobs:
       - name: List archive
         run: ls -l kit.tar
 
-      - name: Upload kit archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: kit-archive
-          path: kit.tar
-          include-hidden-files: true
-          retention-days: 1
-
       - name: Checkout source repo
         uses: disputechalice/test-gh-actions/checkout-archive@main
         with:
           repo: ${{ inputs.url }}
           ref: ${{ inputs.ref }}
           dir: gitrepo
-
-      - name: Upload source archive
-        uses: actions/upload-artifact@v4
-        with:
-          name: gitrepo-archive
-          path: gitrepo.tar
-          include-hidden-files: true
-          retention-days: 1
 
       - name: Prep environment
         run: |
