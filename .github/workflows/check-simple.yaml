@@ -69,8 +69,8 @@ jobs:
           path: .
       - name: Extract kit & repo
         run: |
-          tar -xf kit-archive.tar kit
-          tar -xf gitrepo-archive.tar girepo
+          tar -xf kit-archive.tar -C kit
+          tar -xf gitrepo-archive.tar -C gitrepo
           ls -la
       - name: Prep build environment
         run: |
@@ -112,8 +112,8 @@ jobs:
           path: .
       - name: Extract repo
         run: |
-          tar -xzf kit-archive.tar kit
-          tar -xzf gitrepo-archive.tar gitrepo
+          tar -xzf kit-archive.tar -C kit
+          tar -xzf gitrepo-archive.tar -C gitrepo
       - name: Check if published package checksum matches
         run: |
           kit/check-url
