@@ -4,27 +4,6 @@ init() {
     trap 'echo "${BASH_SOURCE[0]##*/}: Error $? (l.$LINENO) - aborted."; exit 1;' ERR
 }
 
-req_apt() {
-    (($# > 0)) || return 255
-
-    declare -x DEBIAN_FRONTEND=noninteractive
-    apt-get -qq update
-    apt-get -qqo Dpkg::Use-Pty=0 satisfy "$@"
-}
-
-req_repo() {
-    [[ -n $1 ]] && declare repo_dir=$1 || return 255
-    [[ -n $2 ]] && declare repo_url=$2 || return 255
-
-    req_apt git
-    git clone --depth 1 "$repo_url" "$repo_dir"
-
-    tee "gitmeta.out" >&2 << EOF
-GIT_URL=$repo_url
-GIT_COMMIT=$(git --git-dir="$repo_dir"/.git --work-tree="$repo_dir" rev-parse HEAD)
-EOF
-}
-
 req_permsrc() {
     [[ -n $1 ]] && declare repo_dir=$1 || return 255
 

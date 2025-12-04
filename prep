@@ -3,8 +3,6 @@
 source "${BASH_SOURCE[0]%/*}"/util && init || exit 255
 
 repo_dir=${1:?}
-repo_url=${2:?}
 
-req_repo "$repo_dir" "$repo_url"
 req_permsrc "$repo_dir"
 req_buildmeta "$repo_dir"

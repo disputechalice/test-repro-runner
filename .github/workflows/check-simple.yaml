@@ -25,7 +25,7 @@ jobs:
 
       - name: Check kit
         run: |
-          git clone https://github.com/${GITHUB_REPOSITORY}.git kit
+          git clone --no-checkout --depth 1 https://github.com/${GITHUB_REPOSITORY}.git kit
           cd kit
           git fetch --depth=1 origin "$GITHUB_SHA"
           git checkout "$GITHUB_SHA"
@@ -37,6 +37,10 @@ jobs:
           cd gitrepo
           git fetch --depth 1 origin ${{ inputs.ref }}
           git checkout ${{ inputs.ref }}
+          tee "gitmeta.out" >&2 << EOF
+            GIT_URL=${{ inputs.url }}
+            GIT_COMMIT=$(git --git-dir=.git --work-tree=. rev-parse HEAD)
+          EOF
           git archive --prefix=gitrepo/ --format=tar -o ../gitrepo-archive.tar ${{ inputs.ref }}
 
       - name: Upload kit archive
@@ -112,8 +116,8 @@ jobs:
           path: .
       - name: Extract repo
         run: |
-          tar -xzf kit-archive.tar
-          tar -xzf gitrepo-archive.tar
+          tar -xf kit-archive.tar
+          tar -xf gitrepo-archive.tar
       - name: Check if published package checksum matches
         run: |
           kit/check-url

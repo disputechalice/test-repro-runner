@@ -4,8 +4,6 @@ source "${BASH_SOURCE[0]%/*}"/util && init || exit 255
 
 out_dir=$(pwd -P)
 
-req_apt wget
-
 [[ -n $DEB_PACKAGE ]]
 [[ -n $DEB_SHA256 ]]
 [[ -n $DEB_URL ]]
