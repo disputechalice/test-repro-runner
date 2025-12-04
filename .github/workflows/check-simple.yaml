@@ -53,7 +53,7 @@ jobs:
           git checkout ${{ inputs.ref }}
           git archive --prefix=gitrepo/ --format=tar -o ../gitrepo-archive.tar ${{ inputs.ref }}
 
-      - name: Upload archive artifact
+      - name: Upload source archive
         uses: actions/upload-artifact@v4
         with:
           name: gitrepo-archive
@@ -88,26 +88,9 @@ jobs:
     container: ghcr.io/disputechalice/builder-simple:latest
     needs: checkout-repo
     steps:
-      - name: Download kit archive
-        uses: actions/download-artifact@v4
-        with:
-          name: kit-archive
-          path: .
-      - name: Download repo archive
-        uses: actions/download-artifact@v4
-        with:
-          name: gitrepo-archive
-          path: .
+      - name: Prep
+        uses: ./.github/actions/prep
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: checkout-repo-env
-          path: ./env
-
-      - name: Extract kit & repo
-        run: |
-          tar -xf kit-archive.tar
-          tar -xf gitrepo-archive.tar
       - name: Check if build can be reproduced
         run: |
           source env/build.env
@@ -126,11 +109,6 @@ jobs:
         with:
           name: kit-archive
           path: .
-      - name: Download repo archive
-        uses: actions/download-artifact@v4
-        with:
-          name: gitrepo-archive
-          path: .
 
       - uses: actions/download-artifact@v4
         with:
@@ -140,14 +118,12 @@ jobs:
       - name: Extract repo
         run: |
           tar -xf kit-archive.tar
-          tar -xf gitrepo-archive.tar
       - name: Check if published package checksum matches
         run: |
           source env/build.env
           export DEB_{PACKAGE,SHA256,URL}
 
           kit/check-url
-          cat check-url.out >> $GITHUB_ENV
 
   report:
     name: Generate report
@@ -159,12 +135,15 @@ jobs:
         with:
           name: kit-archive
           path: .
+      - name: Extract kit
+        run: |
+          tar -xf kit-archive.tar
 
-      - uses: actions/download-artifact@v4
+      - name: Download environment
+        uses: actions/download-artifact@v4
         with:
           name: checkout-repo-env
           path: ./env
-
       - name: Run report
         run: |
           for f in env/*.env; do source "$f"; done      
