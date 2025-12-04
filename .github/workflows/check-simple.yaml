@@ -71,6 +71,7 @@ jobs:
         run: |
           tar -xf kit-archive.tar
           tar -xf gitrepo-archive.tar
+          ls -la
       - name: Prep build environment
         run: |
           kit/prep gitrepo ${{ inputs.url }}
@@ -110,7 +111,9 @@ jobs:
           name: gitrepo-archive
           path: .
       - name: Extract repo
-        run: tar -xzf gitrepo-archive.tar.gz
+        run: |
+          tar -xzf kit-archive.tar
+          tar -xzf gitrepo-archive.tar
       - name: Check if published package checksum matches
         run: |
           kit/check-url
