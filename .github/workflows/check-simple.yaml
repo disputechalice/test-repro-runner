@@ -52,7 +52,9 @@ jobs:
           git checkout ${{ inputs.ref }}
           git archive --prefix=gitrepo/ --format=tar -o ../gitrepo-archive.tar ${{ inputs.ref }}
 
-          tee gitsource.env >&2 << EOF
+          mkdir -p ../env
+
+          tee ../env/gitsource.env >&2 << EOF
             GIT_URL=$(git remote get-url origin)
             GIT_COMMIT=$(git --git-dir=.git --work-tree=. rev-parse HEAD)
           EOF
@@ -69,7 +71,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: checkout-repo-env
-          path: gitsource.env
+          path: env
           include-hidden-files: true
           retention-days: 1
 
