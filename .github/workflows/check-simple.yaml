@@ -15,7 +15,7 @@ jobs:
   repro-checks:
     name: repro checks
     runs-on: ubuntu-latest
-    container: debian:13
+    container: ghcr.io/disputechalice/builder:latest
     steps:
       - name: Clone kit
         uses: actions/checkout@v4
