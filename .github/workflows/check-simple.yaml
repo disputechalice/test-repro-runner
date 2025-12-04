@@ -42,14 +42,14 @@ jobs:
       - name: Upload kit archive
         uses: actions/upload-artifact@v4
         with:
-          name: kit-archive.tar.gz
+          name: kit-archive
           path: kit-archive.tar.gz
 
       - name: Upload archive artifact
         uses: actions/upload-artifact@v4
         with:
-          name: repo-archive.tar.gz
-          path: repo-archive.tar.gz
+          name: gitrepo-archive
+          path: gitrepo-archive.tar.gz
 
   build:  
     name: Build artifact
@@ -60,15 +60,15 @@ jobs:
       - name: Download kit archive
         uses: actions/download-artifact@v4
         with:
-          name: kit-archive.tar.gz
+          name: kit-archive
           path: .
       - name: Download repo archive
         uses: actions/download-artifact@v4
         with:
-          name: repo-archive.tar.gz
+          name: gitrepo-archive
           path: .
       - name: Extract repo
-        run: ls -la && tar -xzf repo-archive.tar.gz
+        run: ls -la && tar -xzf gitrepo-archive.tar.gz
       - name: Prep build environment
         run: |
           kit/prep gitrepo ${{ inputs.url }}
@@ -100,15 +100,15 @@ jobs:
       - name: Download kit archive
         uses: actions/download-artifact@v4
         with:
-          name: kit-archive.tar.gz
+          name: kit-archive
           path: .
       - name: Download repo archive
         uses: actions/download-artifact@v4
         with:
-          name: repo-archive.tar.gz
+          name: gitrepo-archive
           path: .
       - name: Extract repo
-        run: tar -xzf repo-archive.tar.gz
+        run: tar -xzf gitrepo-archive.tar.gz
       - name: Check if published package checksum matches
         run: |
           kit/check-url
