@@ -67,8 +67,10 @@ jobs:
         with:
           name: gitrepo-archive
           path: .
-      - name: Extract repo
-        run: ls -la && tar -xzf gitrepo-archive.tar.gz
+      - name: Extract kit & repo
+        run: |
+          tar -xf kit-archive.tar
+          tar -xf gitrepo-archive.tar
       - name: Prep build environment
         run: |
           kit/prep gitrepo ${{ inputs.url }}
