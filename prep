@@ -1,8 +1,0 @@
-#!/bin/bash
-
-source "${BASH_SOURCE[0]%/*}"/util && init || exit 255
-
-repo_dir=${1:?}
-
-req_permsrc "$repo_dir"
-req_buildmeta "$repo_dir"

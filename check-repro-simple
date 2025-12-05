@@ -1,6 +1,5 @@
 #!/bin/bash
-
-source "${BASH_SOURCE[0]%/*}"/util && init || exit 255
+set -e
 
 out_dir=$(pwd -P)
 repo_dir=${1:-$out_dir}

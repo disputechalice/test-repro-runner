@@ -1,6 +1,5 @@
 #!/bin/bash
-
-source "${BASH_SOURCE[0]%/*}"/util && init || exit 255
+set -e
 
 out_dir=$(pwd -P)
 
@@ -13,6 +12,5 @@ wget --no-verbose -O "$tmp_deb" "$DEB_URL"
 sha256sum --check <<< "$DEB_SHA256  $tmp_deb"
 
 tee "$out_dir/check-url.out" >&2 << EOF
-CHECK_URL_LAST=$(date --rfc-3339=seconds --utc)
 CHECK_URL=pass
 EOF
