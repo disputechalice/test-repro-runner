@@ -148,12 +148,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [repro, dist]
     steps:
-      - name: Download environment
-        uses: actions/download-artifact@v4
-        with:
-          name: prep-env-dir
-          path: ./env
-
       - name: Run report
         run: |
           tee -a "report.md" >&2 << EOF
