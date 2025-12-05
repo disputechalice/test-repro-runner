@@ -89,8 +89,18 @@ jobs:
     steps:
       - name: Prep
         uses: disputechalice/test-gh-actions/prep@main
+
+      - name: Download environment
+        uses: actions/download-artifact@v4
+        with:
+          name: checkout-repo-env
+          path: ./env
+
       - name: Check if build can be reproduced
         run: |
+          ls -la .
+          ls -la env/
+          
           source env/build.env
           export DEB_{PACKAGE,VERSION,SHA256} \
             SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
