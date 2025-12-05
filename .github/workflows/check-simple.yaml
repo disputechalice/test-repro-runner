@@ -62,17 +62,16 @@ jobs:
           buildmeta=${found_buildmeta[0]}
           [[ -f $buildmeta ]]
           buildmeta_fname=${buildmeta##*/}
-          target="${buildmeta_fname%%.buildmeta}"
-
-          source "$buildmeta" || return 255
+          buildmeta_fname_bare="${buildmeta_fname%%.buildmeta}"
+          source "$buildmeta" || return 1
 
           cat >> $GITHUB_OUTPUT << EOF
-          deb_package=${target%%_*}
-          deb_version=${target#*_}
-          deb_sha256=$DEB_SHA256
-          deb_url=$DEB_URL
+          deb_package=${buildmeta_fname_bare%%_*}
+          deb_version=${buildmeta_fname_bare#*_}
           source_date_epoch=$SOURCE_DATE_EPOCH
           dpkg_deb_compressor_type=$DPKG_DEB_COMPRESSOR_TYPE
+          deb_sha256=$DEB_SHA256
+          deb_url=$DEB_URL
           EOF
 
   repro:  
