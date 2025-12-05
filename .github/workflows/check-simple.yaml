@@ -52,7 +52,7 @@ jobs:
           GIT_COMMIT=$(git rev-parse HEAD)
           EOF
 
-          found_buildmeta=("$search_dir"/*.buildmeta)
+          found_buildmeta=(gitrepo/*.buildmeta)
           ((${#found_buildmeta[@]} == 1))
           buildmeta=${found_buildmeta[0]}
           [[ -f $buildmeta ]]
