@@ -146,7 +146,7 @@ jobs:
 
   report:
     runs-on: ubuntu-latest
-    needs: [repro, dist]
+    needs: [prepare, repro, dist]
     steps:
       - name: Run report
         run: |
