@@ -17,7 +17,6 @@ defaults:
 jobs:
 
   prep-env:
-    name: Prepare kit, source and environment
     runs-on: ubuntu-latest
     env:
       GIT_URL: ${{ inputs.url }}
@@ -96,7 +95,6 @@ jobs:
           kit/check-build-simple gitrepo
 
   package:
-    name: Check published package URL
     runs-on: ubuntu-latest
     needs: prep-env
     steps:
@@ -111,7 +109,6 @@ jobs:
           kit/check-url
 
   report:
-    name: Generate report
     runs-on: ubuntu-latest
     needs: [build, package]
     steps:
