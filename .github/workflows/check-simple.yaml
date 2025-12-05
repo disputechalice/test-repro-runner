@@ -161,7 +161,8 @@ jobs:
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_URL:?}" "${DEB_SHA256:?}" "${GIT_URL:?}" "${GIT_SHA:?}"
 
           tee -a "report.md" >&2 << EOF
-          Report as of: **$(date --rfc-3339=seconds --utc)**
+          # Report
+          As of: **$(date --rfc-3339=seconds --utc)**
 
           | Package | *$DEB_PACKAGE* |
           |---------|----------------|
