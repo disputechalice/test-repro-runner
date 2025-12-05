@@ -104,9 +104,18 @@ jobs:
       - name: Check if published package checksum matches
         run: |
           source env/prep.env
-          export DEB_{PACKAGE,SHA256,URL}
 
-          kit/check-dist
+          [[ -n $DEB_PACKAGE ]]
+          [[ -n $DEB_SHA256 ]]
+          [[ -n $DEB_URL ]]
+
+          tmp_deb=$(mktemp "/tmp/$DEB_PACKAGE"_XXXXXX.deb)
+          wget --no-verbose -O "$tmp_deb" "$DEB_URL"
+          sha256sum --check <<< "$DEB_SHA256  $tmp_deb"
+
+          tee check-url.out >&2 << EOF
+          CHECK_URL=pass
+          EOF
 
   report:
     runs-on: ubuntu-latest
