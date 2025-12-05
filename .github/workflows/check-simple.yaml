@@ -21,6 +21,16 @@ jobs:
     env:
       GIT_URL: ${{ inputs.url }}
       GIT_COMMIT: ${{ inputs.ref }}
+    outputs:
+      git_url: ${{ steps.prep.outputs.git_url }}
+      git_sha: ${{ steps.prep.outputs.git_sha }}
+      deb_package: ${{ steps.prep.outputs.deb_package }}
+      deb_version: ${{ steps.prep.outputs.deb_version }}
+      deb_sha256: ${{ steps.prep.outputs.deb_sha256 }}
+      deb_url: ${{ steps.prep.outputs.deb_url }}
+      source_date_epoch: ${{ steps.prep.outputs.source_date_epoch }}
+      dpkg_deb_compressor_type: ${{ steps.prep.outputs.dpkg_deb_compressor_type }}
+
     steps:
 
       - name: Get kit repo
@@ -39,14 +49,12 @@ jobs:
           permsrc: true
 
       - name: Prep environment
+        id: prep
         run: |
-          mkdir -p env
-
           export GIT_DIR="gitrepo.git"
-
-          tee -a env/prep.env >&2 << EOF
-          GIT_URL=$(git remote get-url origin)
-          GIT_COMMIT=$(git rev-parse HEAD)
+          cat >> $GITHUB_OUTPUT << EOF
+          git_url=$(git remote get-url origin)
+          git_sha=$(git rev-parse HEAD)
           EOF
 
           found_buildmeta=(gitrepo/*.buildmeta)
@@ -54,29 +62,18 @@ jobs:
           buildmeta=${found_buildmeta[0]}
           [[ -f $buildmeta ]]
           buildmeta_fname=${buildmeta##*/}
-
           target="${buildmeta_fname%%.buildmeta}"
-          package=${target%%_*}
-          version=${target#*_}
 
           source "$buildmeta" || return 255
 
-          tee -a "env/prep.env" >&2 << EOF
-          DEB_PACKAGE=$package
-          DEB_VERSION=$version
-
-          SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH
-          DPKG_DEB_COMPRESSOR_TYPE=$DPKG_DEB_COMPRESSOR_TYPE
-
-          DEB_SHA256=$DEB_SHA256
-          DEB_URL=$DEB_URL
+          cat >> $GITHUB_OUTPUT << EOF
+          deb_package=${target%%_*}
+          deb_version=${target#*_}
+          deb_sha256=$DEB_SHA256
+          deb_url=$DEB_URL
+          source_date_epoch=$SOURCE_DATE_EPOCH
+          dpkg_deb_compressor_type=$DPKG_DEB_COMPRESSOR_TYPE
           EOF
-
-      - name: Upload environment
-        uses: actions/upload-artifact@v4
-        with:
-          name: prep-env-dir
-          path: env
 
   repro:  
     runs-on: ubuntu-latest
@@ -92,18 +89,16 @@ jobs:
       - name: Check if build can be reproduced
         id: check
         run: |
-          source env/prep.env
-
           out_dir=$(pwd -P)
           repo_dir=gitrepo
 
-          [[ -n $DEB_PACKAGE ]]
-          [[ -n $DEB_VERSION ]]
-          [[ -n $DEB_SHA256 ]]
-          [[ -n $SOURCE_DATE_EPOCH ]]
-          [[ -n $DPKG_DEB_COMPRESSOR_TYPE ]]
+          DEB_PACKAGE="${{ needs.prepare.outputs.deb_package }}"
+          DEB_VERSION="${{ needs.prepare.outputs.deb_version }}"
+          DEB_SHA256="${{ needs.prepare.outputs.deb_sha256 }}"
+          SOURCE_DATE_EPOCH="${{ needs.prepare.outputs.source_date_epoch }}"
+          DPKG_DEB_COMPRESSOR_TYPE="${{ needs.prepare.outputs.dpkg_deb_compressor_type }}"
 
-          declare -x SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
+          export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
 
           tmp_deb=$(mktemp "$DEB_PACKAGE"_XXXXXX.deb)
           dpkg-deb --build --root-owner-group "$repo_dir/$DEB_PACKAGE" "$tmp_deb"
@@ -137,11 +132,9 @@ jobs:
       - name: Check if published package checksum matches
         id: check
         run: |
-          source env/prep.env
-
-          [[ -n $DEB_PACKAGE ]]
-          [[ -n $DEB_SHA256 ]]
-          [[ -n $DEB_URL ]]
+          DEB_PACKAGE="${{ needs.prepare.outputs.deb_package }}"
+          DEB_SHA256="${{ needs.prepare.outputs.deb_sha256 }}"
+          DEB_URL="${{ needs.prepare.outputs.deb_url }}"
 
           tmp_deb=$(mktemp "/tmp/$DEB_PACKAGE"_XXXXXX.deb)
           wget --no-verbose -O "$tmp_deb" "$DEB_URL"
@@ -163,8 +156,6 @@ jobs:
 
       - name: Run report
         run: |
-          for f in env/*.env; do source "$f"; done
-
           tee -a "report.md" >&2 << EOF
           **$(date --rfc-3339=seconds --utc)**
           EOF
@@ -175,20 +166,20 @@ jobs:
           ## Build reproducibility confirmed
 
           ### Package
-          *$DEB_PACKAGE*
+          *${{ needs.prepare.outputs.deb_package }}*
 
           ### Version
-          *$DEB_VERSION*
+          *${{ needs.prepare.outputs.deb_version }}*
 
           ### Source URL
-          [$GIT_URL]($GIT_URL)
+          [${{ needs.prepare.outputs.git_url }}](${{ needs.prepare.outputs.git_url }})
 
           ### Source Git commit SHA
-          $GIT_COMMIT
+          ${{ needs.prepare.outputs.git_sha }}
 
           ### Package checksum SHA256
 
-          $DEB_SHA256
+          ${{ needs.prepare.outputs.deb_sha256 }}
           EOF
           fi
 
@@ -198,7 +189,7 @@ jobs:
           ## Published package checksum verified
 
           ### Package URL
-          [$DEB_URL]($DEB_URL)
+          [${{ needs.prepare.outputs.deb_url }}](${{ needs.prepare.outputs.deb_url }})
 
           Checksum matches that of the reproduced build.
           EOF
