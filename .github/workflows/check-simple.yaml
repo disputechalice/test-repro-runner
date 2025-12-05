@@ -26,15 +26,15 @@ jobs:
 
     steps:
 
-      - name: Get kit repo
-        uses: disputechalice/test-gh-actions/checkout-archive@main
+      - name: Kit
+        uses: disputechalice/test-gh-actions/source-archive@main
         with:
           repo: https://github.com/"$GITHUB_REPOSITORY".git
           ref: main
           dir: kit
 
-      - name: Get source repo
-        uses: disputechalice/test-gh-actions/checkout-archive@main
+      - name: Source
+        uses: disputechalice/test-gh-actions/source-archive@main
         with:
           repo: ${{ inputs.url }}
           ref: ${{ inputs.ref }}
