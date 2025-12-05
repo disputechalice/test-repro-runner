@@ -82,11 +82,15 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/disputechalice/builder-simple:latest
     needs: prepare
+    outputs:
+      status: ${{ steps.check.outputs.status }}
+
     steps:
       - name: Prep
         uses: disputechalice/test-gh-actions/prep@main
 
       - name: Check if build can be reproduced
+        id: check
         run: |
           source env/prep.env
 
@@ -117,8 +121,8 @@ jobs:
 
           sha256sum --check <<< "$DEB_SHA256  $out_dir/$deb_fname"
 
-          tee "$out_dir/check-build-simple.out" >&2 << EOF
-          CHECK_BUILD=pass
+          cat >> $GITHUB_OUTPUT << EOF
+          status=pass
           EOF
 
   dist:
@@ -161,10 +165,12 @@ jobs:
         run: |
           for f in env/*.env; do source "$f"; done
 
-          # [[ $CHECK_BUILD == "pass" ]]
+          tee -a "report.md" >&2 << EOF
+          **$(date --rfc-3339=seconds --utc)**
+          EOF
 
-          tee "report.md" >&2 << EOF
-          As of: **$(date --rfc-3339=seconds --utc)**
+          if [[ "${{ needs.repro.outputs.status }}" == "pass" ]]; then
+            tee -a "report.md" >&2 << EOF
 
           ## Build reproducibility confirmed
 
@@ -184,6 +190,7 @@ jobs:
 
           $DEB_SHA256
           EOF
+          fi
 
           if [[ "${{ needs.dist.outputs.status }}" == "pass" ]]; then
             tee -a "report.md" >&2 << EOF
