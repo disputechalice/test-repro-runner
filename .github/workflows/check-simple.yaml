@@ -124,11 +124,14 @@ jobs:
   dist:
     runs-on: ubuntu-latest
     needs: prepare
+    outputs:
+      status: ${{ steps.check.outputs.status }}
     steps:
       - name: Prep
         uses: disputechalice/test-gh-actions/prep@main
 
       - name: Check if published package checksum matches
+        id: check
         run: |
           source env/prep.env
 
@@ -140,8 +143,8 @@ jobs:
           wget --no-verbose -O "$tmp_deb" "$DEB_URL"
           sha256sum --check <<< "$DEB_SHA256  $tmp_deb"
 
-          tee check-url.out >&2 << EOF
-          CHECK_URL=pass
+          cat >> $GITHUB_OUTPUT << EOF
+          status=pass
           EOF
 
   report:
@@ -182,9 +185,8 @@ jobs:
           $DEB_SHA256
           EOF
 
-          # [[ $CHECK_URL == "pass" ]]
-
-          tee -a "report.md" >&2 << EOF
+          if [[ "${{ needs.dist.outputs.status }}" == "pass" ]]; then
+            tee -a "report.md" >&2 << EOF
 
           ## Published package checksum verified
 
@@ -193,5 +195,6 @@ jobs:
 
           Checksum matches that of the reproduced build.
           EOF
+          fi
 
           cat report.md >> $GITHUB_STEP_SUMMARY
