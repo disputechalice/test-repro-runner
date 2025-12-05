@@ -78,8 +78,6 @@ jobs:
         with:
           name: checkout-repo-env
           path: env
-          include-hidden-files: true
-          retention-days: 1
 
   build:  
     name: Repro build
