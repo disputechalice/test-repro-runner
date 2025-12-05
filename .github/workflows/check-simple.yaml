@@ -80,19 +80,12 @@ jobs:
           path: env
 
   build:  
-    name: Repro build
     runs-on: ubuntu-latest
     container: ghcr.io/disputechalice/builder-simple:latest
     needs: prep-env
     steps:
       - name: Prep
         uses: disputechalice/test-gh-actions/prep@main
-
-      - name: Download environment
-        uses: actions/download-artifact@v4
-        with:
-          name: prep-env-dir
-          path: ./env
 
       - name: Check if build can be reproduced
         run: |
@@ -102,18 +95,13 @@ jobs:
 
           kit/check-build-simple gitrepo
 
-  url-check:
+  package:
     name: Check published package URL
     runs-on: ubuntu-latest
     needs: prep-env
     steps:
       - name: Prep
         uses: disputechalice/test-gh-actions/prep@main
-
-      - uses: actions/download-artifact@v4
-        with:
-          name: prep-env-dir
-          path: ./env
 
       - name: Check if published package checksum matches
         run: |
@@ -125,7 +113,7 @@ jobs:
   report:
     name: Generate report
     runs-on: ubuntu-latest
-    needs: [build, url-check]
+    needs: [build, package]
     steps:
       - name: Download environment
         uses: actions/download-artifact@v4
