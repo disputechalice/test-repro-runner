@@ -92,7 +92,7 @@ jobs:
           export DEB_{PACKAGE,VERSION,SHA256} \
             SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
 
-          kit/check-build-simple gitrepo
+          kit/check-repro-simple gitrepo
 
   dist:
     runs-on: ubuntu-latest
@@ -106,7 +106,7 @@ jobs:
           source env/prep.env
           export DEB_{PACKAGE,SHA256,URL}
 
-          kit/check-url
+          kit/check-dist
 
   report:
     runs-on: ubuntu-latest
