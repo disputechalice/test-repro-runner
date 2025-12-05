@@ -129,22 +129,48 @@ jobs:
     runs-on: ubuntu-latest
     needs: [build, url-check]
     steps:
-      - name: Download kit archive
-        uses: actions/download-artifact@v4
-        with:
-          name: kit-archive
-          path: .
-      - name: Extract kit
-        run: |
-          tar -xf kit.tar
-
       - name: Download environment
         uses: actions/download-artifact@v4
         with:
           name: checkout-repo-env
           path: ./env
+
       - name: Run report
         run: |
-          for f in env/*.env; do source "$f"; done      
-          kit/report
-          cat report.out >> $GITHUB_STEP_SUMMARY
+          for f in env/*.env; do source "$f"; done
+
+          # [[ $CHECK_BUILD == "pass" ]]
+
+          tee "report.md" >&2 << EOF
+          ## Build reproducibility confirmed
+
+          ### Package
+          *$DEB_PACKAGE*
+
+          ### Version
+          *$DEB_VERSION*
+
+          ### Source URL
+          [$GIT_URL]($GIT_URL)
+
+          ### Source Git commit SHA
+          $GIT_COMMIT
+
+          ### Package checksum SHA256
+
+          $DEB_SHA256
+          EOF
+
+          # [[ $CHECK_URL == "pass" ]]
+
+          tee -a "report.md" >&2 << EOF
+
+          ## Published package checksum verified
+
+          ### Package URL
+          [$DEB_URL]($DEB_URL)
+
+          **$CHECK_URL_LAST** Checksum matches that of the reproduced build.
+          EOF
+
+          cat report.md >> $GITHUB_STEP_SUMMARY
