@@ -84,15 +84,14 @@ jobs:
           out_dir=$(pwd -P)
           repo_dir=gitrepo
           
-          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
-          DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version }}"
-          DEB_SHA256="${{ fromJson(needs.prepare.outputs.prep).deb_sha256 }}"
-          SOURCE_DATE_EPOCH="${{ fromJson(needs.prepare.outputs.prep).source_date_epoch }}"
-          DPKG_DEB_COMPRESSOR_TYPE="${{ fromJson(needs.prepare.outputs.prep).dpkg_deb_compressor_type }}"
-
-          export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
+          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package? }}"
+          DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version? }}"
+          DEB_SHA256="${{ fromJson(needs.prepare.outputs.prep).deb_sha256? }}"
+          SOURCE_DATE_EPOCH="${{ fromJson(needs.prepare.outputs.prep).source_date_epoch? }}"
+          DPKG_DEB_COMPRESSOR_TYPE="${{ fromJson(needs.prepare.outputs.prep).dpkg_deb_compressor_type? }}"
 
           tmp_deb=$(mktemp "$DEB_PACKAGE"_XXXXXX.deb)
+          export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
           dpkg-deb --build --root-owner-group "$repo_dir/$DEB_PACKAGE" "$tmp_deb"
 
           read -r deb_package deb_version <<< "$(
@@ -124,9 +123,9 @@ jobs:
       - name: Check if published package checksum matches
         id: check
         run: |
-          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
-          DEB_SHA256="${{ fromJson(needs.prepare.outputs.prep).deb_sha256 }}"
-          DEB_URL="${{ fromJson(needs.prepare.outputs.prep).deb_url }}"
+          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package? }}"
+          DEB_SHA256="${{ fromJson(needs.prepare.outputs.prep).deb_sha256? }}"
+          DEB_URL="${{ fromJson(needs.prepare.outputs.prep).deb_url? }}"
 
           tmp_deb=$(mktemp "/tmp/$DEB_PACKAGE"_XXXXXX.deb)
           wget --no-verbose -O "$tmp_deb" "$DEB_URL"
@@ -136,55 +135,58 @@ jobs:
           status=pass
           EOF
 
-  report:
-    runs-on: ubuntu-latest
-    needs: [prepare, repro, dist]
-    steps:
-      - name: Run report
-        run: |
-          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
-          DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version }}"
-          DEB_URL="${{ fromJson(needs.prepare.outputs.prep).deb_url }}"
-          DEB_SHA256="${{ fromJson(needs.prepare.outputs.prep).deb_sha256 }}"
-          GIT_URL="${{ fromJson(needs.prepare.outputs.prep).git_url }}"
-          GIT_SHA="${{ fromJson(needs.prepare.outputs.prep).git_sha }}"
+report:
+  runs-on: ubuntu-latest
+  needs: [prepare, repro, dist]
+  steps:
+    - name: Run report
+      run: |
+        STATUS_REPRO="${{ needs.repro.outputs.status }}"
+        STATUS_DIST="${{ needs.dist.outputs.status }}"
 
+        DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package? }}"
+        DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version? }}"
+        DEB_URL="${{ fromJson(needs.prepare.outputs.prep).deb_url? }}"
+        DEB_SHA256="${{ fromJson(needs.prepare.outputs.prep).deb_sha256? }}"
+        GIT_URL="${{ fromJson(needs.prepare.outputs.prep).git_url? }}"
+        GIT_SHA="${{ fromJson(needs.prepare.outputs.prep).git_sha? }}"
+
+        tee -a "report.md" >&2 << EOF
+        **$(date --rfc-3339=seconds --utc)**
+        EOF
+
+        if [[ "$STATUS_REPRO" == "pass" ]]; then
           tee -a "report.md" >&2 << EOF
-          **$(date --rfc-3339=seconds --utc)**
-          EOF
 
-          if [[ "${{ needs.repro.outputs.status }}" == "pass" ]]; then
-            tee -a "report.md" >&2 << EOF
+        ## Build reproducibility confirmed
 
-          ## Build reproducibility confirmed
+        ### Package
+        *$DEB_PACKAGE*
 
-          ### Package
-          *$DEB_PACKAGE*
+        ### Version
+        *$DEB_VERSION*
 
-          ### Version
-          *$DEB_VERSION*
+        ### Source URL
+        [$GIT_URL]($GIT_URL)
 
-          ### Source URL
-          [$GIT_URL]($GIT_URL)
+        ### Source Git commit SHA
+        $GIT_SHA
 
-          ### Source Git commit SHA
-          $GIT_SHA
+        ### Package checksum SHA256
+        $DEB_SHA256
+        EOF
+        fi
 
-          ### Package checksum SHA256
-          $DEB_SHA256
-          EOF
-          fi
+        if [[ "$STATUS_DIST" == "pass" ]]; then
+          tee -a "report.md" >&2 << EOF
 
-          if [[ "${{ needs.dist.outputs.status }}" == "pass" ]]; then
-            tee -a "report.md" >&2 << EOF
+        ## Published package checksum verified
 
-          ## Published package checksum verified
+        ### Package URL
+        [$DEB_URL]($DEB_URL)
 
-          ### Package URL
-          [$DEB_URL]($DEB_URL)
+        Checksum matches that of the reproduced build.
+        EOF
+        fi
 
-          Checksum matches that of the reproduced build.
-          EOF
-          fi
-
-          cat report.md >> $GITHUB_STEP_SUMMARY
+        cat report.md >> $GITHUB_STEP_SUMMARY
