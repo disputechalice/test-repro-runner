@@ -52,7 +52,7 @@ jobs:
           GIT_COMMIT=$(git rev-parse HEAD)
           EOF
 
-          kit/prep gitrepo
+          kit/prep gitrepo.git
 
       - name: Upload environment
         uses: actions/upload-artifact@v4
