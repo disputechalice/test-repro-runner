@@ -84,11 +84,13 @@ jobs:
           out_dir=$(pwd -P)
           repo_dir=gitrepo
           
-          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package? }}"
-          DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version? }}"
-          DEB_SHA256="${{ fromJson(needs.prepare.outputs.prep).deb_sha256? }}"
-          SOURCE_DATE_EPOCH="${{ fromJson(needs.prepare.outputs.prep).source_date_epoch? }}"
-          DPKG_DEB_COMPRESSOR_TYPE="${{ fromJson(needs.prepare.outputs.prep).dpkg_deb_compressor_type? }}"
+          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
+          DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version }}"
+          DEB_SHA256="${{ fromJson(needs.prepare.outputs.prep).deb_sha256 }}"
+          SOURCE_DATE_EPOCH="${{ fromJson(needs.prepare.outputs.prep).source_date_epoch }}"
+          DPKG_DEB_COMPRESSOR_TYPE="${{ fromJson(needs.prepare.outputs.prep).dpkg_deb_compressor_type }}"
+
+          : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}" "${SOURCE_DATE_EPOCH:?}"
 
           tmp_deb=$(mktemp "$DEB_PACKAGE"_XXXXXX.deb)
           export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
@@ -123,9 +125,11 @@ jobs:
       - name: Check if published package checksum matches
         id: check
         run: |
-          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package? }}"
-          DEB_SHA256="${{ fromJson(needs.prepare.outputs.prep).deb_sha256? }}"
-          DEB_URL="${{ fromJson(needs.prepare.outputs.prep).deb_url? }}"
+          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
+          DEB_SHA256="${{ fromJson(needs.prepare.outputs.prep).deb_sha256 }}"
+          DEB_URL="${{ fromJson(needs.prepare.outputs.prep).deb_url }}"
+
+          : "${DEB_PACKAGE:?}" "${DEB_SHA256:?}" "${DEB_URL:?}"
 
           tmp_deb=$(mktemp "/tmp/$DEB_PACKAGE"_XXXXXX.deb)
           wget --no-verbose -O "$tmp_deb" "$DEB_URL"
@@ -144,12 +148,14 @@ report:
         STATUS_REPRO="${{ needs.repro.outputs.status }}"
         STATUS_DIST="${{ needs.dist.outputs.status }}"
 
-        DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package? }}"
-        DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version? }}"
-        DEB_URL="${{ fromJson(needs.prepare.outputs.prep).deb_url? }}"
-        DEB_SHA256="${{ fromJson(needs.prepare.outputs.prep).deb_sha256? }}"
-        GIT_URL="${{ fromJson(needs.prepare.outputs.prep).git_url? }}"
-        GIT_SHA="${{ fromJson(needs.prepare.outputs.prep).git_sha? }}"
+        DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
+        DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version }}"
+        DEB_URL="${{ fromJson(needs.prepare.outputs.prep).deb_url }}"
+        DEB_SHA256="${{ fromJson(needs.prepare.outputs.prep).deb_sha256 }}"
+        GIT_URL="${{ fromJson(needs.prepare.outputs.prep).git_url }}"
+        GIT_SHA="${{ fromJson(needs.prepare.outputs.prep).git_sha }}"
+
+        : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_URL:?}" "${DEB_SHA256:?}" "${GIT_URL:?}" "${GIT_SHA:?}"
 
         tee -a "report.md" >&2 << EOF
         **$(date --rfc-3339=seconds --utc)**
