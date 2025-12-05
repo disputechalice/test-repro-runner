@@ -16,22 +16,22 @@ defaults:
 
 jobs:
 
-  checkout-repo:
-    name: Prep kit & source repo
+  prep-env:
+    name: Prepare kit, source and environment
     runs-on: ubuntu-latest
     env:
       GIT_URL: ${{ inputs.url }}
       GIT_COMMIT: ${{ inputs.ref }}
     steps:
 
-      - name: Checkout kit repo
+      - name: Get kit repo
         uses: disputechalice/test-gh-actions/checkout-archive@main
         with:
           repo: https://github.com/"$GITHUB_REPOSITORY".git
           ref: main
           dir: kit
 
-      - name: Checkout source repo
+      - name: Get source repo
         uses: disputechalice/test-gh-actions/checkout-archive@main
         with:
           repo: ${{ inputs.url }}
@@ -45,7 +45,7 @@ jobs:
 
           export GIT_DIR="gitrepo.git"
 
-          tee env/gitsource.env >&2 << EOF
+          tee -a env/prep.env >&2 << EOF
           GIT_URL=$(git remote get-url origin)
           GIT_COMMIT=$(git rev-parse HEAD)
           EOF
@@ -62,7 +62,7 @@ jobs:
 
           source "$buildmeta" || return 255
 
-          tee "env/build.env" >&2 << EOF
+          tee -a "env/prep.env" >&2 << EOF
           DEB_PACKAGE=$package
           DEB_VERSION=$version
 
@@ -76,14 +76,14 @@ jobs:
       - name: Upload environment
         uses: actions/upload-artifact@v4
         with:
-          name: checkout-repo-env
+          name: prep-env-dir
           path: env
 
   build:  
     name: Repro build
     runs-on: ubuntu-latest
     container: ghcr.io/disputechalice/builder-simple:latest
-    needs: checkout-repo
+    needs: prep-env
     steps:
       - name: Prep
         uses: disputechalice/test-gh-actions/prep@main
@@ -91,12 +91,12 @@ jobs:
       - name: Download environment
         uses: actions/download-artifact@v4
         with:
-          name: checkout-repo-env
+          name: prep-env-dir
           path: ./env
 
       - name: Check if build can be reproduced
         run: |
-          source env/build.env
+          source env/prep.env
           export DEB_{PACKAGE,VERSION,SHA256} \
             SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
 
@@ -105,19 +105,19 @@ jobs:
   url-check:
     name: Check published package URL
     runs-on: ubuntu-latest
-    needs: checkout-repo
+    needs: prep-env
     steps:
       - name: Prep
         uses: disputechalice/test-gh-actions/prep@main
 
       - uses: actions/download-artifact@v4
         with:
-          name: checkout-repo-env
+          name: prep-env-dir
           path: ./env
 
       - name: Check if published package checksum matches
         run: |
-          source env/build.env
+          source env/prep.env
           export DEB_{PACKAGE,SHA256,URL}
 
           kit/check-url
@@ -130,7 +130,7 @@ jobs:
       - name: Download environment
         uses: actions/download-artifact@v4
         with:
-          name: checkout-repo-env
+          name: prep-env-dir
           path: ./env
 
       - name: Run report
