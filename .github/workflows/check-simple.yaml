@@ -170,7 +170,7 @@ jobs:
           ### Package URL
           [$DEB_URL]($DEB_URL)
 
-          **$CHECK_URL_LAST** Checksum matches that of the reproduced build.
+          **$(date --rfc-3339=seconds --utc)** Checksum matches that of the reproduced build.
           EOF
 
           cat report.md >> $GITHUB_STEP_SUMMARY
