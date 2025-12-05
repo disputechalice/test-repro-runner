@@ -171,7 +171,8 @@ jobs:
 
           ## Build reproducibility confirmed
 
-          |-------------------------|-------|
+          | Reproducible | OK |
+          |--------------|----|
           | Package                 | *$DEB_PACKAGE* |
           | Version                 | *$DEB_VERSION* |
           | Source URL              | [$GIT_URL]($GIT_URL) |
@@ -187,7 +188,8 @@ jobs:
 
           ## Published package checksum verified
 
-          |-------------|-------|
+          | Published | OK |
+          |-----------|----|
           | Package URL | [$DEB_URL]($DEB_URL) |
 
           Checksum matches that of the reproduced build.
