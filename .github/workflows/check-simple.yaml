@@ -45,11 +45,11 @@ jobs:
         run: |
           mkdir -p env
 
+          export GIT_DIR="gitrepo.git"
+
           tee env/gitsource.env >&2 << EOF
-            GIT_URL=$(git --git-dir=gitrepo/.git --work-tree=gitrepo \
-              remote get-url origin)
-            GIT_COMMIT=$(git --git-dir=gitrepo/.git --work-tree=gitrepo \
-              rev-parse HEAD)
+          GIT_URL=$(git remote get-url origin)
+          GIT_COMMIT=$(git rev-parse HEAD)
           EOF
 
           kit/prep gitrepo
