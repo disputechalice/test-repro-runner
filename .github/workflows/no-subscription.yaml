@@ -4,7 +4,7 @@ on:
 
 jobs:
   no-subscription:
-    uses: disputechalice/test-repro-runner/.github/workflows/check-simple.yaml
+    uses: disputechalice/test-repro-runner/.github/workflows/check-simple.yaml@main
     with:
       url: https://github.com/free-pmx/free-pmx-no-subscription.git
       ref: main
