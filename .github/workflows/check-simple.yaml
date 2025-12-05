@@ -52,7 +52,28 @@ jobs:
           GIT_COMMIT=$(git rev-parse HEAD)
           EOF
 
-          kit/prep gitrepo.git
+          found_buildmeta=("$search_dir"/*.buildmeta)
+          ((${#found_buildmeta[@]} == 1))
+          buildmeta=${found_buildmeta[0]}
+          [[ -f $buildmeta ]]
+          buildmeta_fname=${buildmeta##*/}
+
+          target="${buildmeta_fname%%.buildmeta}"
+          package=${target%%_*}
+          version=${target#*_}
+
+          source "$buildmeta" || return 255
+
+          tee "env/build.env" >&2 << EOF
+          DEB_PACKAGE=$package
+          DEB_VERSION=$version
+
+          SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH
+          DPKG_DEB_COMPRESSOR_TYPE=$DPKG_DEB_COMPRESSOR_TYPE
+
+          DEB_SHA256=$DEB_SHA256
+          DEB_URL=$DEB_URL
+          EOF
 
       - name: Upload environment
         uses: actions/upload-artifact@v4
