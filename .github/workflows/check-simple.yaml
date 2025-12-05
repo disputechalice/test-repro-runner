@@ -160,21 +160,21 @@ jobs:
           # Single-line check for non-empty variables
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_URL:?}" "${DEB_SHA256:?}" "${GIT_URL:?}" "${GIT_SHA:?}"
 
-          # Start report with timestamp
           tee -a "report.md" >&2 << EOF
-          **$(date --rfc-3339=seconds --utc)**
+          Report as of: **$(date --rfc-3339=seconds --utc)**
+
+          | Package | *$DEB_PACKAGE* |
+          |---------|----------------|
+          | Version | *$DEB_VERSION* |
           EOF
 
-                  # Reproducibility table
-                  if [[ "$STATUS_REPRO" == "pass" ]]; then
-                    tee -a "report.md" >&2 << EOF
+          if [[ "$STATUS_REPRO" == "pass" ]]; then
+            tee -a "report.md" >&2 << EOF
 
-          ## Build reproducibility confirmed
+          ## Build reproducibility
 
           | Reproducible | OK |
           |--------------|----|
-          | Package                 | *$DEB_PACKAGE* |
-          | Version                 | *$DEB_VERSION* |
           | Source URL              | [$GIT_URL]($GIT_URL) |
           | Source Git commit SHA   | $GIT_SHA |
           | Package checksum SHA256 | $DEB_SHA256 |
@@ -186,7 +186,7 @@ jobs:
           if [[ "$STATUS_DIST" == "pass" ]]; then
             tee -a "report.md" >&2 << EOF
 
-          ## Published package checksum verified
+          ## Published package checksum
 
           | Published | OK |
           |-----------|----|
