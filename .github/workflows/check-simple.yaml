@@ -31,15 +31,13 @@ jobs:
           ref: main
           dir: kit
 
-      - name: List archive
-        run: ls -l kit.tar
-
       - name: Checkout source repo
         uses: disputechalice/test-gh-actions/checkout-archive@main
         with:
           repo: ${{ inputs.url }}
           ref: ${{ inputs.ref }}
           dir: gitrepo
+          permsrc: true
 
       - name: Prep environment
         run: |
