@@ -145,9 +145,11 @@ jobs:
     steps:
       - name: Run report
         run: |
+          # Assign status outputs
           STATUS_REPRO="${{ needs.repro.outputs.status }}"
           STATUS_DIST="${{ needs.dist.outputs.status }}"
 
+          # Assign prepare outputs
           DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
           DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version }}"
           DEB_URL="${{ fromJson(needs.prepare.outputs.prep).deb_url }}"
@@ -155,44 +157,43 @@ jobs:
           GIT_URL="${{ fromJson(needs.prepare.outputs.prep).git_url }}"
           GIT_SHA="${{ fromJson(needs.prepare.outputs.prep).git_sha }}"
 
+          # Single-line check for non-empty variables
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_URL:?}" "${DEB_SHA256:?}" "${GIT_URL:?}" "${GIT_SHA:?}"
 
+          # Start report with timestamp
           tee -a "report.md" >&2 << EOF
           **$(date --rfc-3339=seconds --utc)**
           EOF
 
-          if [[ "$STATUS_REPRO" == "pass" ]]; then
-            tee -a "report.md" >&2 << EOF
+                  # Reproducibility table
+                  if [[ "$STATUS_REPRO" == "pass" ]]; then
+                    tee -a "report.md" >&2 << EOF
 
           ## Build reproducibility confirmed
 
-          ### Package
-          *$DEB_PACKAGE*
+          |-------------------------|-------|
+          | Package                 | *$DEB_PACKAGE* |
+          | Version                 | *$DEB_VERSION* |
+          | Source URL              | [$GIT_URL]($GIT_URL) |
+          | Source Git commit SHA   | $GIT_SHA |
+          | Package checksum SHA256 | $DEB_SHA256 |
 
-          ### Version
-          *$DEB_VERSION*
-
-          ### Source URL
-          [$GIT_URL]($GIT_URL)
-
-          ### Source Git commit SHA
-          $GIT_SHA
-
-          ### Package checksum SHA256
-          $DEB_SHA256
           EOF
           fi
 
+          # Published package table
           if [[ "$STATUS_DIST" == "pass" ]]; then
             tee -a "report.md" >&2 << EOF
 
           ## Published package checksum verified
 
-          ### Package URL
-          [$DEB_URL]($DEB_URL)
+          |-------------|-------|
+          | Package URL | [$DEB_URL]($DEB_URL) |
 
           Checksum matches that of the reproduced build.
+
           EOF
           fi
 
+          # Append to step summary
           cat report.md >> $GITHUB_STEP_SUMMARY
