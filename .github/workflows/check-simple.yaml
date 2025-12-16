@@ -97,7 +97,7 @@ jobs:
         run: |
           out_dir=$(pwd -P)
           repo_dir=gitrepo
-          source "${{ steps.acquire-buildmeta.outputs.file }}"
+          source "${{ needs.prepare.steps.acquire-buildmeta.outputs.file }}"
 
           DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
           DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version }}"
