@@ -59,7 +59,11 @@ jobs:
         uses: disputechalice/test-gh-actions/env-to-json@main
         with:
           sfile: ${{ steps.acquire-buildmeta.outputs.file }}
-          vnames: SOURCE_DATE_EPOCH
+          vnames: SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
+
+      - name: Debug only
+        run: |
+          echo '${{ steps.source-buildmeta.outputs.json }}'
 
       - name: Prep environment
         id: prep
