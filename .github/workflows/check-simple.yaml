@@ -75,8 +75,8 @@ jobs:
           buildmeta="${{ steps.acquire-buildmeta.outputs.file }}"
           buildmeta_fname=${buildmeta##*/}
           buildmeta_fname_bare="${buildmeta_fname%%.buildmeta}"
-
           cat >> $GITHUB_OUTPUT << EOF
+          buildmeta=$buildmeta
           deb_package=${buildmeta_fname_bare%%_*}
           deb_version=${buildmeta_fname_bare#*_}
           EOF
@@ -97,14 +97,14 @@ jobs:
         run: |
           out_dir=$(pwd -P)
           repo_dir=gitrepo
-          source "${{ needs.prepare.steps.acquire-buildmeta.outputs.file }}"
 
           DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
           DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version }}"
 
-          : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}"
+          : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}"
 
-          : "${SOURCE_DATE_EPOCH:?}"
+          source "${{ fromJson(needs.prepare.outputs.prep).buildmeta }}"
+          : "${DEB_SHA256:?}" "${SOURCE_DATE_EPOCH:?}"
 
           tmp_deb=$(mktemp "$DEB_PACKAGE"_XXXXXX.deb)
           export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
