@@ -41,6 +41,26 @@ jobs:
           dir: gitrepo
           permsrc: true
 
+      - name: Find buildmeta file
+        id: acquire-buildmeta
+        run: |
+          found_buildmeta=(gitrepo/*.buildmeta)
+          ((${#found_buildmeta[@]} == 1))
+          buildmeta=${found_buildmeta[0]}
+          [[ -f $buildmeta ]]
+          echo "file=$buildmeta" >> $GITHUB_OUTPUT
+
+      - name: Debug only
+        run: |
+          echo '${{ steps.acquire-buildmeta.outputs.file }}'
+
+      - name: Source buildmeta file
+        id: source-buildmeta
+        uses: disputechalice/test-gh-actions/env-to-json@main
+        with:
+          sfile: ${{ steps.acquire-buildmeta.outputs.file }}
+          vnames: SOURCE_DATE_EPOCH
+
       - name: Prep environment
         id: prep
         run: |
