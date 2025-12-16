@@ -61,7 +61,7 @@ jobs:
         run: |
           echo '${{ steps.source-buildmeta.outputs.json }}'
           echo ===
-          echo"${{ fromJson(steps.source-buildmeta.outputs.json).deb_url }}"
+          echo "${{ fromJson(steps.source-buildmeta.outputs.json).deb_url }}"
 
       - name: Prep environment
         id: prep
@@ -72,21 +72,13 @@ jobs:
           git_sha=$(git rev-parse HEAD)
           EOF
 
-          found_buildmeta=(gitrepo/*.buildmeta)
-          ((${#found_buildmeta[@]} == 1))
-          buildmeta=${found_buildmeta[0]}
-          [[ -f $buildmeta ]]
+          buildmeta="${{ steps.acquire-buildmeta.outputs.file }}"
           buildmeta_fname=${buildmeta##*/}
           buildmeta_fname_bare="${buildmeta_fname%%.buildmeta}"
-          source "$buildmeta" || return 1
 
           cat >> $GITHUB_OUTPUT << EOF
           deb_package=${buildmeta_fname_bare%%_*}
           deb_version=${buildmeta_fname_bare#*_}
-          source_date_epoch=$SOURCE_DATE_EPOCH
-          dpkg_deb_compressor_type=$DPKG_DEB_COMPRESSOR_TYPE
-          deb_sha256=$DEB_SHA256
-          deb_url=$DEB_URL
           EOF
 
   repro:  
@@ -105,14 +97,14 @@ jobs:
         run: |
           out_dir=$(pwd -P)
           repo_dir=gitrepo
-          
+          source "${{ steps.acquire-buildmeta.outputs.file }}"
+
           DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
           DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version }}"
-          DEB_SHA256="${{ fromJson(needs.prepare.outputs.prep).deb_sha256 }}"
-          SOURCE_DATE_EPOCH="${{ fromJson(needs.prepare.outputs.prep).source_date_epoch }}"
-          DPKG_DEB_COMPRESSOR_TYPE="${{ fromJson(needs.prepare.outputs.prep).dpkg_deb_compressor_type }}"
 
-          : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}" "${SOURCE_DATE_EPOCH:?}"
+          : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}"
+
+          : "${SOURCE_DATE_EPOCH:?}"
 
           tmp_deb=$(mktemp "$DEB_PACKAGE"_XXXXXX.deb)
           export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
