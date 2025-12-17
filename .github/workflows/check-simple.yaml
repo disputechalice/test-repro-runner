@@ -62,16 +62,12 @@ jobs:
       - name: Prep environment
         id: prep
         run: |
-          export GIT_DIR="source.git"
-          cat >> $GITHUB_OUTPUT << EOF
-          git_url=$(git remote get-url origin)
-          git_sha=${{ steps.source.outputs.git-commit-sha }}
-          EOF
-
           buildmeta="${{ steps.acquire-buildmeta.outputs.file }}"
           buildmeta_fname=${buildmeta##*/}
           buildmeta_fname_bare="${buildmeta_fname%%.buildmeta}"
+
           cat >> $GITHUB_OUTPUT << EOF
+          git_sha=${{ steps.source.outputs.git-commit-sha }}
           buildmeta=$buildmeta
           deb_package=${buildmeta_fname_bare%%_*}
           deb_version=${buildmeta_fname_bare#*_}
@@ -158,9 +154,9 @@ jobs:
 
           DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
           DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version }}"
-          DEB_URL="${{ fromJson(needs.prepare.outputs.prep).deb_url }}"
-          DEB_SHA256="${{ fromJson(needs.prepare.outputs.prep).deb_sha256 }}"
-          GIT_URL="${{ fromJson(needs.prepare.outputs.prep).git_url }}"
+          DEB_URL="${{ fromJson(needs.prepare.outputs.buildmeta).deb_url }}"
+          DEB_SHA256="${{ fromJson(needs.prepare.outputs.buildmeta).deb_sha256 }}"
+          GIT_URL="${{ inputs.git_url }}"
           GIT_SHA="${{ fromJson(needs.prepare.outputs.prep).git_sha }}"
 
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_URL:?}" "${DEB_SHA256:?}" "${GIT_URL:?}" "${GIT_SHA:?}"
