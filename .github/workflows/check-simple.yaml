@@ -129,9 +129,6 @@ jobs:
     outputs:
       status: ${{ steps.check.outputs.status }}
     steps:
-      - name: Prep
-        uses: disputechalice/test-gh-actions/prep@main
-
       - name: Check if published package checksum matches
         id: check
         run: |
