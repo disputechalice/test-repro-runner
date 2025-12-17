@@ -3,10 +3,10 @@ name: repro-checks
 on:
   workflow_call:
     inputs:
-      url:
+      git-url:
         required: true
         type: string
-      ref:
+      git-ref:
         required: true
         type: string
 
@@ -19,8 +19,8 @@ jobs:
   prepare:
     runs-on: ubuntu-latest
     env:
-      GIT_URL: ${{ inputs.url }}
-      GIT_COMMIT: ${{ inputs.ref }}
+      GIT_URL: ${{ inputs.git-url }}
+      GIT_REF: ${{ inputs.git-ref }}
     outputs:
       prep: ${{ toJson(steps.prep.outputs) }}
 
@@ -33,11 +33,12 @@ jobs:
           git-ref: main
           name: kit
 
-      - name: Source
+      - id: source
+        name: Source
         uses: disputechalice/test-gh-actions/source-archive@main
         with:
-          git-url: ${{ inputs.url }}
-          git-ref: ${{ inputs.ref }}
+          git-url: ${{ inputs.git-url }}
+          git-ref: ${{ inputs.git-ref }}
           name: gitrepo
           permsrc: true
 
@@ -63,7 +64,7 @@ jobs:
           export GIT_DIR="gitrepo.git"
           cat >> $GITHUB_OUTPUT << EOF
           git_url=$(git remote get-url origin)
-          git_sha=$(git rev-parse HEAD)
+          git_sha=${{ steps.source.outputs.git-commit-sha }}
           EOF
 
           buildmeta="${{ steps.acquire-buildmeta.outputs.file }}"
@@ -152,11 +153,9 @@ jobs:
     steps:
       - name: Run report
         run: |
-          # Assign status outputs
           STATUS_REPRO="${{ needs.repro.outputs.status }}"
           STATUS_DIST="${{ needs.dist.outputs.status }}"
 
-          # Assign prepare outputs
           DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
           DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version }}"
           DEB_URL="${{ fromJson(needs.prepare.outputs.prep).deb_url }}"
@@ -164,7 +163,6 @@ jobs:
           GIT_URL="${{ fromJson(needs.prepare.outputs.prep).git_url }}"
           GIT_SHA="${{ fromJson(needs.prepare.outputs.prep).git_sha }}"
 
-          # Single-line check for non-empty variables
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_URL:?}" "${DEB_SHA256:?}" "${GIT_URL:?}" "${GIT_SHA:?}"
 
           tee -a "report.md" >&2 << EOF
