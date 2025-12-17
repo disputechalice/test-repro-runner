@@ -29,19 +29,19 @@ jobs:
       - name: Kit
         uses: disputechalice/test-gh-actions/source-archive@main
         with:
-          repo: https://github.com/"$GITHUB_REPOSITORY".git
-          ref: main
-          dir: kit
+          git-url: https://github.com/"$GITHUB_REPOSITORY".git
+          git-ref: main
+          name: kit
 
       - name: Source
         uses: disputechalice/test-gh-actions/source-archive@main
         with:
-          repo: ${{ inputs.url }}
-          ref: ${{ inputs.ref }}
-          dir: gitrepo
+          git-url: ${{ inputs.url }}
+          git-ref: ${{ inputs.ref }}
+          name: gitrepo
           permsrc: true
 
-      - name: Find buildmeta file
+      - name: Acquire buildmeta file
         id: acquire-buildmeta
         run: |
           found_buildmeta=(gitrepo/*.buildmeta)
@@ -56,12 +56,6 @@ jobs:
         with:
           sfile: ${{ steps.acquire-buildmeta.outputs.file }}
           vnames: SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE DEB_SHA256 DEB_URL
-
-      - name: Debug only
-        run: |
-          echo '${{ steps.source-buildmeta.outputs.json }}'
-          echo ===
-          echo "${{ fromJson(steps.source-buildmeta.outputs.json).deb_url }}"
 
       - name: Prep environment
         id: prep
@@ -100,7 +94,6 @@ jobs:
 
           DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
           DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version }}"
-
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}"
 
           source "${{ fromJson(needs.prepare.outputs.prep).buildmeta }}"
