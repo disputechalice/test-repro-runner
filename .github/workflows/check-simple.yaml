@@ -85,7 +85,9 @@ jobs:
 
     steps:
       - name: Prep
-        uses: disputechalice/test-gh-actions/prep@main
+        uses: disputechalice/test-gh-actions/fetch-artifact-tar@main
+        with:
+          name: gitrepo.tar
 
       - name: Check if build can be reproduced
         id: check
