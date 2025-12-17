@@ -23,6 +23,7 @@ jobs:
       GIT_REF: ${{ inputs.git-ref }}
     outputs:
       prep: ${{ toJson(steps.prep.outputs) }}
+      buildmeta: ${{ steps.source-buildmeta.outputs.json }}
 
     steps:
 
@@ -133,8 +134,8 @@ jobs:
         id: check
         run: |
           DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
-          DEB_SHA256="${{ fromJson(needs.prepare.outputs.prep).deb_sha256 }}"
-          DEB_URL="${{ fromJson(needs.prepare.outputs.prep).deb_url }}"
+          DEB_SHA256="${{ fromJson(needs.prepare.outputs.buildmeta).deb_sha256 }}"
+          DEB_URL="${{ fromJson(needs.prepare.outputs.buildmeta).deb_url }}"
 
           : "${DEB_PACKAGE:?}" "${DEB_SHA256:?}" "${DEB_URL:?}"
 
