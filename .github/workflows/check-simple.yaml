@@ -39,13 +39,13 @@ jobs:
         with:
           git-url: ${{ inputs.git-url }}
           git-ref: ${{ inputs.git-ref }}
-          name: gitrepo
+          name: source
           permsrc: true
 
       - name: Acquire buildmeta file
         id: acquire-buildmeta
         run: |
-          found_buildmeta=(gitrepo/*.buildmeta)
+          found_buildmeta=(source/*.buildmeta)
           ((${#found_buildmeta[@]} == 1))
           buildmeta=${found_buildmeta[0]}
           [[ -f $buildmeta ]]
@@ -61,7 +61,7 @@ jobs:
       - name: Prep environment
         id: prep
         run: |
-          export GIT_DIR="gitrepo.git"
+          export GIT_DIR="source.git"
           cat >> $GITHUB_OUTPUT << EOF
           git_url=$(git remote get-url origin)
           git_sha=${{ steps.source.outputs.git-commit-sha }}
@@ -84,16 +84,16 @@ jobs:
       status: ${{ steps.check.outputs.status }}
 
     steps:
-      - name: Prep
+      - name: Get source archive
         uses: disputechalice/test-gh-actions/fetch-artifact-tar@main
         with:
-          name: gitrepo.tar
+          name: source.tar
 
       - name: Check if build can be reproduced
         id: check
         run: |
           out_dir=$(pwd -P)
-          repo_dir=gitrepo
+          repo_dir=source
 
           DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
           DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version }}"
