@@ -156,7 +156,7 @@ jobs:
           DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version }}"
           DEB_URL="${{ fromJson(needs.prepare.outputs.buildmeta).deb_url }}"
           DEB_SHA256="${{ fromJson(needs.prepare.outputs.buildmeta).deb_sha256 }}"
-          GIT_URL="${{ inputs.git_url }}"
+          GIT_URL="${{ inputs.git-url }}"
           GIT_SHA="${{ fromJson(needs.prepare.outputs.prep).git_sha }}"
 
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_URL:?}" "${DEB_SHA256:?}" "${GIT_URL:?}" "${GIT_SHA:?}"
