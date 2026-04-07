@@ -116,13 +116,15 @@ jobs:
           out_dir=$(pwd -P)
           repo_dir=source
 
-          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
-          DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version }}"
-          : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}"
+          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}"
+          DEB_VERSION="${{ fromJson(needs.prepare.outputs.buildprov).deb_version }}"
+          DEB_SHA256="${{ fromJson(needs.prepare.outputs.buildprov).deb_sha256 }}"
+          : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}"
 
-          source "${{ fromJson(needs.prepare.outputs.prep).buildmeta }}"
-          : "${DEB_SHA256:?}" "${SOURCE_DATE_EPOCH:?}"
 
+          SOURCE_DATE_EPOCH="${{ fromJson(needs.prepare.outputs.buildenv).source_date_epoch }}"
+          DPKG_DEB_COMPRESSOR_TYPE="${{ fromJson(needs.prepare.outputs.buildenv).dpkg_deb_compressor_type }}"
+          : "${SOURCE_DATE_EPOCH:?}" "${DPKG_DEB_COMPRESSOR_TYPE:?}"
           tmp_deb=$(mktemp "$DEB_PACKAGE"_XXXXXX.deb)
           export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
           dpkg-deb --build --root-owner-group "$repo_dir/$DEB_PACKAGE" "$tmp_deb"
@@ -153,12 +155,11 @@ jobs:
       - name: Check if published package checksum matches
         id: check
         run: |
-          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
-          DEB_SHA256="${{ fromJson(needs.prepare.outputs.buildmeta).deb_sha256 }}"
-          DEB_URL="${{ fromJson(needs.prepare.outputs.buildmeta).deb_url }}"
+          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}"
+          DEB_SHA256="${{ fromJson(needs.prepare.outputs.buildprov).deb_sha256 }}"
+          DEB_URL="${{ fromJson(needs.prepare.outputs.buildprov).deb_url }}"
 
           : "${DEB_PACKAGE:?}" "${DEB_SHA256:?}" "${DEB_URL:?}"
-
           tmp_deb=$(mktemp "/tmp/$DEB_PACKAGE"_XXXXXX.deb)
           wget --no-verbose -O "$tmp_deb" "$DEB_URL"
           sha256sum --check <<< "$DEB_SHA256  $tmp_deb"
@@ -174,13 +175,13 @@ jobs:
       - name: Run report
         run: |
           GIT_URL="${{ inputs.git-url }}"
-          GIT_SHA="${{ fromJson(needs.prepare.outputs.prep).git_sha }}"
+          GIT_SHA="${{ fromJson(needs.prepare.outputs.buildprov).commit_id }}"
 
-          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.prep).deb_package }}"
-          DEB_VERSION="${{ fromJson(needs.prepare.outputs.prep).deb_version }}"
+          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}"
+          DEB_VERSION="${{ fromJson(needs.prepare.outputs.buildprov).deb_version }}"
 
-          DEB_SHA256="${{ fromJson(needs.prepare.outputs.buildmeta).deb_sha256 }}"
-          DEB_URL="${{ fromJson(needs.prepare.outputs.buildmeta).deb_url }}"
+          DEB_SHA256="${{ fromJson(needs.prepare.outputs.buildprov).deb_sha256 }}"
+          DEB_URL="${{ fromJson(needs.prepare.outputs.buildprov).deb_url }}"
 
           STATUS_REPRO="${{ needs.repro.outputs.status }}"
           STATUS_DIST="${{ needs.dist.outputs.status }}"
