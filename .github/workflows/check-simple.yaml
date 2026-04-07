@@ -72,19 +72,19 @@ jobs:
           meta='${{ steps.source-buildmeta.outputs.json }}'
           buildenv=$(jq -c '{source_date_epoch, dpkg_deb_compressor_type}' <<< "$meta")
           buildprov=$(jq -c \
-            --arg git_sha "${{ steps.source.outputs.git-commit-sha }}" \
+            --arg commit_id "${{ steps.source.outputs.git-commit-sha }}" \
             --arg deb_package "$deb_package" \
             --arg deb_version "$deb_version" \
             '{
               deb_package: $deb_package,
               deb_version: $deb_version,
-              git_sha: $git_sha,
+              commit_id: $commit_id,
               deb_sha256: .deb_sha256,
               deb_url: .deb_url
           }' <<< "$meta")
 
           echo "Provenance:"
-          echo "$provenance" | jq .
+          echo "$buildprov" | jq .
 
           cat >> $GITHUB_OUTPUT << EOF
           git_sha=${{ steps.source.outputs.git-commit-sha }}
