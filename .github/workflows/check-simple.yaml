@@ -156,8 +156,8 @@ jobs:
           DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}"
           DEB_SHA256="${{ fromJson(needs.prepare.outputs.buildprov).deb_sha256 }}"
           DEB_URL="${{ fromJson(needs.prepare.outputs.buildprov).deb_url }}"
-
           : "${DEB_PACKAGE:?}" "${DEB_SHA256:?}" "${DEB_URL:?}"
+
           tmp_deb=$(mktemp "/tmp/$DEB_PACKAGE"_XXXXXX.deb)
           wget --no-verbose -O "$tmp_deb" "$DEB_URL"
           sha256sum --check <<< "$DEB_SHA256  $tmp_deb"
@@ -170,21 +170,19 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare, repro, dist]
     steps:
-      - name: Run report
+      - name: Report summary
         run: |
           GIT_URL="${{ inputs.git-url }}"
-          GIT_SHA="${{ fromJson(needs.prepare.outputs.buildprov).commit_id }}"
-
+          GIT_COMMIT="${{ fromJson(needs.prepare.outputs.buildprov).commit_id }}"
+          : "${GIT_URL:?}" "${GIT_COMMIT:?}"           
           DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}"
           DEB_VERSION="${{ fromJson(needs.prepare.outputs.buildprov).deb_version }}"
-
-          DEB_SHA256="${{ fromJson(needs.prepare.outputs.buildprov).deb_sha256 }}"
           DEB_URL="${{ fromJson(needs.prepare.outputs.buildprov).deb_url }}"
+          DEB_SHA256="${{ fromJson(needs.prepare.outputs.buildprov).deb_sha256 }}"
+          : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_URL:?}" "${DEB_SHA256:?}"
 
           STATUS_REPRO="${{ needs.repro.outputs.status }}"
           STATUS_DIST="${{ needs.dist.outputs.status }}"
-
-          : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_URL:?}" "${DEB_SHA256:?}" "${GIT_URL:?}" "${GIT_SHA:?}"
 
           tee -a "report.md" >&2 << EOF
           # Report
@@ -202,21 +200,20 @@ jobs:
 
           | Reproducible | OK |
           |--------------|----|
-          | Source URL              | [$GIT_URL]($GIT_URL) |
-          | Source Git commit SHA   | $GIT_SHA |
+          | Source Git URL          | [$GIT_URL]($GIT_URL) |
+          | Source Git commit       | $GIT_COMMIT |
           | Package checksum SHA256 | $DEB_SHA256 |
 
           EOF
           fi
 
-          # Published package table
           if [[ "$STATUS_DIST" == "pass" ]]; then
             tee -a "report.md" >&2 << EOF
 
-          ## Published package checksum
+          ## Distributed package checksum
 
-          | Published | OK |
-          |-----------|----|
+          | Distributed | OK |
+          |-------------|----|
           | Package URL | [$DEB_URL]($DEB_URL) |
 
           Checksum matches that of the reproduced build.
