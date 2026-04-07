@@ -66,9 +66,22 @@ jobs:
           buildmeta_fname=${buildmeta##*/}
           buildmeta_fname_bare="${buildmeta_fname%%.buildmeta}"
 
+          deb_package=${buildmeta_fname_bare%%_*}
+          deb_version=${buildmeta_fname_bare#*_}
+
           meta='${{ steps.source-buildmeta.outputs.json }}'
           buildenv=$(jq -c '{source_date_epoch, dpkg_deb_compressor_type}' <<< "$meta")
-          provenance=$(jq -c '{deb_sha256, deb_url}' <<< "$meta")          
+          buildprov=$(jq -c \
+            --arg git_sha "${{ steps.source.outputs.git-commit-sha }}" \
+            --arg deb_package "$deb_package" \
+            --arg deb_version "$deb_version" \
+            '{
+              deb_package: $deb_package,
+              deb_version: $deb_version,
+              git_sha: $git_sha,
+              deb_sha256: .deb_sha256,
+              deb_url: .deb_url
+          }' <<< "$meta")
 
           cat >> $GITHUB_OUTPUT << EOF
           git_sha=${{ steps.source.outputs.git-commit-sha }}
@@ -76,7 +89,7 @@ jobs:
           deb_package=${buildmeta_fname_bare%%_*}
           deb_version=${buildmeta_fname_bare#*_}
           buildenv=$buildenv
-          provenance=$provenance
+          buildprov=$buildprov
           EOF
 
   repro:  
