@@ -22,8 +22,10 @@ jobs:
       GIT_URL: ${{ inputs.git-url }}
       GIT_REF: ${{ inputs.git-ref }}
     outputs:
-      prep: ${{ toJson(steps.prep.outputs) }}
+      prep: ${{ toJson(steps.resolve-context.outputs) }}
       buildmeta: ${{ steps.source-buildmeta.outputs.json }}
+      buildenv: ${{ steps.resolve-context.outputs.buildenv }}
+      buildprov: ${{ steps.resolve-context.outputs.buildprov }}      
 
     steps:
 
@@ -59,8 +61,8 @@ jobs:
           sfile: ${{ steps.acquire-buildmeta.outputs.file }}
           vnames: SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE DEB_SHA256 DEB_URL
 
-      - name: Prep environment
-        id: prep
+      - name: Resolve build context
+        id: resolve-context
         run: |
           buildmeta="${{ steps.acquire-buildmeta.outputs.file }}"
           buildmeta_fname=${buildmeta##*/}
