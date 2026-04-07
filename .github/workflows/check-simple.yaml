@@ -67,8 +67,8 @@ jobs:
           buildmeta_fname_bare="${buildmeta_fname%%.buildmeta}"
 
           meta='${{ steps.source-buildmeta.outputs.json }}'
-          buildenv=$(jq '{source_date_epoch, dpkg_deb_compressor_type}' <<< "$meta")
-          provenance=$(jq '{deb_sha256, deb_url}' <<< "$meta")          
+          buildenv=$(jq -c '{source_date_epoch, dpkg_deb_compressor_type}' <<< "$meta")
+          provenance=$(jq -c '{deb_sha256, deb_url}' <<< "$meta")          
 
           cat >> $GITHUB_OUTPUT << EOF
           git_sha=${{ steps.source.outputs.git-commit-sha }}
