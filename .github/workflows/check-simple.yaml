@@ -193,33 +193,34 @@ jobs:
           | Version | *$DEB_VERSION* |
           EOF
 
-          if [[ "$STATUS_REPRO" == "pass" ]]; then
-            tee -a "report.md" >&2 << EOF
 
-          ## Build reproducibility
+          tee -a "report.md" >&2 << EOF
 
-          | Reproducible | OK |
+          ## Reproduced build
+
+          | Verified | ${STATUS_REPRO:-fail} |
           |--------------|----|
           | Source Git URL          | [$GIT_URL]($GIT_URL) |
           | Source Git commit       | $GIT_COMMIT |
           | Package checksum SHA256 | $DEB_SHA256 |
 
           EOF
-          fi
 
-          if [[ "$STATUS_DIST" == "pass" ]]; then
-            tee -a "report.md" >&2 << EOF
 
-          ## Distributed package checksum
+          tee -a "report.md" >&2 << EOF
 
-          | Distributed | OK |
+          ## Distributed package
+
+          | Checksum | ${STATUS_DIST:-fail} |
           |-------------|----|
           | Package URL | [$DEB_URL]($DEB_URL) |
 
           Checksum matches that of the reproduced build.
 
           EOF
-          fi
 
-          # Append to step summary
+
           cat report.md >> $GITHUB_STEP_SUMMARY
+
+          [[ "$STATUS_REPRO" == "pass" ]]
+          [[ "$STATUS_DIST" == "pass" ]]
