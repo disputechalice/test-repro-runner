@@ -83,6 +83,9 @@ jobs:
               deb_url: .deb_url
           }' <<< "$meta")
 
+          echo "Provenance:"
+          echo "$provenance" | jq .
+
           cat >> $GITHUB_OUTPUT << EOF
           git_sha=${{ steps.source.outputs.git-commit-sha }}
           buildmeta=$buildmeta
