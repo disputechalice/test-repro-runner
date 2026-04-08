@@ -64,8 +64,8 @@ jobs:
 
           cat >> $GITHUB_OUTPUT << EOF
           path=$buildmeta
-          deb-package=${buildmeta_fname_bare%%_*}
-          deb-version=${buildmeta_fname_bare#*_}
+          package=${buildmeta_fname_bare%%_*}
+          version=${buildmeta_fname_bare#*_}
           EOF
 
       - id: source-buildmeta
@@ -79,8 +79,8 @@ jobs:
         name: Resolve build context
         env:
           GIT_COMMIT: ${{ steps.source.outputs.git-commit }}
-          DEB_PACKAGE: ${{ steps.source.outputs.deb-package }}
-          DEB_VERSION: ${{ steps.source.outputs.deb-version }}
+          DEB_PACKAGE: ${{ steps.source.outputs.package }}
+          DEB_VERSION: ${{ steps.source.outputs.version }}
           BUILDMETA: ${{ steps.source-buildmeta.outputs.json }}
         run: |
           buildenv=$(jq -c \
