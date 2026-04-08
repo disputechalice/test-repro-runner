@@ -26,7 +26,6 @@ jobs:
       buildprov: ${{ steps.resolve-context.outputs.buildprov }}      
 
     steps:
-
       - name: Kit
         uses: disputechalice/test-gh-actions/source-archive@main
         with:
@@ -78,13 +77,15 @@ jobs:
             }' <<< "$meta")
 
           buildprov=$(jq -c \
-            --arg commit_id "${{ steps.source.outputs.git-commit-sha }}" \
+            --arg git_url "${{ inputs.git-url }}" \
+            --arg git_commit "${{ steps.source.outputs.git-commit-sha }}" \
             --arg deb_package "$deb_package" \
             --arg deb_version "$deb_version" \
             '{
+              git_url: $git_url,              
+              git_commit: $git_commit,
               deb_package: $deb_package,
               deb_version: $deb_version,
-              commit_id: $commit_id,
               deb_sha256: .deb_sha256,
               deb_url: .deb_url
           }' <<< "$meta")
@@ -111,7 +112,7 @@ jobs:
         id: check
         run: |
           out_dir=$(pwd -P)
-          repo_dir=source
+          src_dir=source
 
           DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}"
           DEB_VERSION="${{ fromJson(needs.prepare.outputs.buildprov).deb_version }}"
@@ -123,20 +124,19 @@ jobs:
           DPKG_DEB_COMPRESSOR_TYPE="${{ fromJson(needs.prepare.outputs.buildenv).dpkg_deb_compressor_type }}"
           : "${SOURCE_DATE_EPOCH:?}" "${DPKG_DEB_COMPRESSOR_TYPE:?}"
 
-          tmp_deb=$(mktemp "$DEB_PACKAGE"_XXXXXX.deb)
+          built_deb=$(mktemp "$DEB_PACKAGE"_XXXXXX.deb)
           export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
-          dpkg-deb --build --root-owner-group "$repo_dir/$DEB_PACKAGE" "$tmp_deb"
+          dpkg-deb --build --root-owner-group "$src_dir/$DEB_PACKAGE" "$built_deb"
 
-          read -r deb_package deb_version <<< "$(
-              dpkg-deb --show --showformat='${Package} ${Version}\n' \
-                  "$tmp_deb"
+          read -r built_package built_version <<< "$(
+              dpkg-deb --show --showformat='${Package} ${Version}\n' "$built_deb"
           )"
 
-          [[ $DEB_PACKAGE == "$deb_package" ]]
-          [[ $DEB_VERSION == "$deb_version" ]]
+          [[ $DEB_PACKAGE == "$built_package" ]]
+          [[ $DEB_VERSION == "$built_version" ]]
 
-          deb_fname="${deb_package}_${deb_version}.deb"
-          mv -v "$tmp_deb" "$out_dir/$deb_fname"
+          deb_fname="${built_package}_${built_version}.deb"
+          mv -v "$built_deb" "$out_dir/$deb_fname"
 
           sha256sum --check <<< "$DEB_SHA256  $out_dir/$deb_fname"
 
@@ -150,7 +150,7 @@ jobs:
     outputs:
       status: ${{ steps.check.outputs.status }}
     steps:
-      - name: Check if published package checksum matches
+      - name: Check if distributed package checksum matches
         id: check
         run: |
           DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}"
@@ -158,9 +158,9 @@ jobs:
           DEB_URL="${{ fromJson(needs.prepare.outputs.buildprov).deb_url }}"
           : "${DEB_PACKAGE:?}" "${DEB_SHA256:?}" "${DEB_URL:?}"
 
-          tmp_deb=$(mktemp "/tmp/$DEB_PACKAGE"_XXXXXX.deb)
-          wget --no-verbose -O "$tmp_deb" "$DEB_URL"
-          sha256sum --check <<< "$DEB_SHA256  $tmp_deb"
+          dist_deb=$(mktemp "/tmp/$DEB_PACKAGE"_XXXXXX.deb)
+          wget --no-verbose -O "$dist_deb" "$DEB_URL"
+          sha256sum --check <<< "$DEB_SHA256  $dist_deb"
 
           cat >> $GITHUB_OUTPUT << EOF
           status=pass
@@ -172,8 +172,8 @@ jobs:
     steps:
       - name: Report summary
         run: |
-          GIT_URL="${{ inputs.git-url }}"
-          GIT_COMMIT="${{ fromJson(needs.prepare.outputs.buildprov).commit_id }}"
+          GIT_URL="${{ fromJson(needs.prepare.outputs.buildprov).git_url }}"
+          GIT_COMMIT="${{ fromJson(needs.prepare.outputs.buildprov).git_commit }}"
           : "${GIT_URL:?}" "${GIT_COMMIT:?}"           
           DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}"
           DEB_VERSION="${{ fromJson(needs.prepare.outputs.buildprov).deb_version }}"
@@ -184,7 +184,9 @@ jobs:
           STATUS_REPRO="${{ needs.repro.outputs.status }}"
           STATUS_DIST="${{ needs.dist.outputs.status }}"
 
+
           tee -a "report.md" >&2 << EOF
+
           # Report
           As of: **$(date --rfc-3339=seconds --utc)**
 
@@ -196,13 +198,13 @@ jobs:
 
           tee -a "report.md" >&2 << EOF
 
-          ## Reproduced build
+          ## Reproducible build
 
-          | Verified | ${STATUS_REPRO:-fail} |
-          |--------------|----|
-          | Source Git URL          | [$GIT_URL]($GIT_URL) |
-          | Source Git commit       | $GIT_COMMIT |
-          | Package checksum SHA256 | $DEB_SHA256 |
+          | Verified                | ${STATUS_REPRO:-fail} |
+          |-------------------------|-----------------------|
+          | Source Git URL          | [$GIT_URL]($GIT_URL)  |
+          | Source Git commit       | $GIT_COMMIT           |
+          | Package checksum SHA256 | $DEB_SHA256           |
 
           EOF
 
@@ -211,11 +213,9 @@ jobs:
 
           ## Distributed package
 
-          | Checksum | ${STATUS_DIST:-fail} |
-          |-------------|----|
+          | Checksum    | ${STATUS_DIST:-fail} |
+          |-------------|----------------------|
           | Package URL | [$DEB_URL]($DEB_URL) |
-
-          Checksum matches that of the reproduced build.
 
           EOF
 
