@@ -18,9 +18,7 @@ jobs:
 
   prepare:
     runs-on: ubuntu-latest
-    env:
-      GIT_URL: ${{ inputs.git-url }}
-      GIT_REF: ${{ inputs.git-ref }}
+
     outputs:
       buildenv: ${{ steps.resolve-context.outputs.buildenv }}
       buildprov: ${{ steps.resolve-context.outputs.buildprov }}      
@@ -96,11 +94,16 @@ jobs:
           EOF
 
   repro:  
+    needs: prepare
     runs-on: ubuntu-latest
     container: ghcr.io/disputechalice/builder-simple:latest
-    needs: prepare
+
     env:
-      DEB_PACKAGEX: ${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}
+      DEB_PACKAGE: ${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}
+      DEB_VERSION: ${{ fromJson(needs.prepare.outputs.buildprov).deb_version }}
+      DEB_SHA256: ${{ fromJson(needs.prepare.outputs.buildprov).deb_sha256 }}
+      SOURCE_DATE_EPOCH: ${{ fromJson(needs.prepare.outputs.buildenv).source_date_epoch }}
+      DPKG_DEB_COMPRESSOR_TYPE: ${{ fromJson(needs.prepare.outputs.buildenv).dpkg_deb_compressor_type }}
 
     outputs:
       status: ${{ steps.check.outputs.status }}
@@ -114,18 +117,11 @@ jobs:
       - name: Check if build can be reproduced
         id: check
         run: |
+          : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}"
+          : "${SOURCE_DATE_EPOCH:?}" "${DPKG_DEB_COMPRESSOR_TYPE:?}"
+
           out_dir=$(pwd -P)
           src_dir=source
-
-          DEB_PACKAGE="${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}"
-          DEB_VERSION="${{ fromJson(needs.prepare.outputs.buildprov).deb_version }}"
-          DEB_SHA256="${{ fromJson(needs.prepare.outputs.buildprov).deb_sha256 }}"
-          : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}"
-
-
-          SOURCE_DATE_EPOCH="${{ fromJson(needs.prepare.outputs.buildenv).source_date_epoch }}"
-          DPKG_DEB_COMPRESSOR_TYPE="${{ fromJson(needs.prepare.outputs.buildenv).dpkg_deb_compressor_type }}"
-          : "${SOURCE_DATE_EPOCH:?}" "${DPKG_DEB_COMPRESSOR_TYPE:?}"
 
           built_deb=$(mktemp "$DEB_PACKAGE"_XXXXXX.deb)
           export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
