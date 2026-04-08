@@ -40,8 +40,8 @@ jobs:
           name: source
           permsrc: true
 
-      - name: Acquire buildmeta file
-        id: acquire-buildmeta
+      - id: acquire-buildmeta
+        name: Acquire buildmeta file
         run: |
           found_buildmeta=(source/*.buildmeta)
           ((${#found_buildmeta[@]} == 1))
@@ -49,15 +49,15 @@ jobs:
           [[ -f $buildmeta ]]
           echo "file=$buildmeta" >> $GITHUB_OUTPUT
 
-      - name: Source buildmeta file
-        id: source-buildmeta
+      - id: source-buildmeta
+        name: Source buildmeta file
         uses: disputechalice/test-gh-actions/env-to-json@main
         with:
           sfile: ${{ steps.acquire-buildmeta.outputs.file }}
           vnames: SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE DEB_SHA256 DEB_URL
 
-      - name: Resolve build context
-        id: resolve-context
+      - id: resolve-context
+        name: Resolve build context
         run: |
           buildmeta="${{ steps.acquire-buildmeta.outputs.file }}"
           buildmeta_fname=${buildmeta##*/}
@@ -114,30 +114,25 @@ jobs:
         with:
           name: source.tar
 
-      - name: Check if build can be reproduced
-        id: check
+      - id: check
+        name: Check if build can be reproduced
         run: |
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}"
           : "${SOURCE_DATE_EPOCH:?}" "${DPKG_DEB_COMPRESSOR_TYPE:?}"
 
-          out_dir=$(pwd -P)
           src_dir=source
 
-          built_deb=$(mktemp "$DEB_PACKAGE"_XXXXXX.deb)
+          built_deb=$(mktemp /tmp/repro.XXXXXX.deb)
           export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
           dpkg-deb --build --root-owner-group "$src_dir/$DEB_PACKAGE" "$built_deb"
 
-          read -r built_package built_version <<< "$(
-              dpkg-deb --show --showformat='${Package} ${Version}\n' "$built_deb"
-          )"
+          read -r built_package built_version <<< \
+            "$(dpkg-deb --show --showformat='${Package} ${Version}\n' "$built_deb")"
 
           [[ $DEB_PACKAGE == "$built_package" ]]
           [[ $DEB_VERSION == "$built_version" ]]
 
-          deb_fname="${built_package}_${built_version}.deb"
-          mv -v "$built_deb" "$out_dir/$deb_fname"
-
-          sha256sum --check <<< "$DEB_SHA256  $out_dir/$deb_fname"
+          sha256sum --check <<< "$DEB_SHA256  $built_deb"
 
           cat >> $GITHUB_OUTPUT << EOF
           status=pass
@@ -148,19 +143,18 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DEB_PACKAGE: ${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}
       DEB_SHA256: ${{ fromJson(needs.prepare.outputs.buildprov).deb_sha256 }}
       DEB_URL: ${{ fromJson(needs.prepare.outputs.buildprov).deb_url }}
 
     outputs:
       status: ${{ steps.check.outputs.status }}
     steps:
-      - name: Check if distributed package checksum matches
-        id: check
+      - id: check
+        name: Check if distributed package checksum matches
         run: |
-          : "${DEB_PACKAGE:?}" "${DEB_SHA256:?}" "${DEB_URL:?}"
+          : "${DEB_SHA256:?}" "${DEB_URL:?}"
 
-          dist_deb=$(mktemp "/tmp/$DEB_PACKAGE"_XXXXXX.deb)
+          dist_deb=$(mktemp /tmp/dist.XXXXXX.deb)
           wget --no-verbose -O "$dist_deb" "$DEB_URL"
           sha256sum --check <<< "$DEB_SHA256  $dist_deb"
 
@@ -205,9 +199,9 @@ jobs:
 
           | Verified          | ${STATUS_REPRO:-fail} |
           |-------------------|-----------------------|
+          | Package checksum  | $DEB_SHA256           |          
           | Source Git URL    | [$GIT_URL]($GIT_URL)  |
           | Source Git commit | $GIT_COMMIT           |
-          | Package checksum  | $DEB_SHA256           |
 
           EOF
 
@@ -218,8 +212,8 @@ jobs:
 
           | Verified         | ${STATUS_DIST:-fail} |
           |------------------|----------------------|
-          | Package URL      | [$DEB_URL]($DEB_URL) |
           | Package checksum | $DEB_SHA256          |
+          | Package URL      | [$DEB_URL]($DEB_URL) |
           EOF
 
 
