@@ -113,7 +113,7 @@ jobs:
       - name: Get source archive
         uses: disputechalice/test-gh-actions/fetch-artifact-tar@main
         with:
-          name: source.tar
+          name: source
 
       - id: check
         name: Check if build can be reproduced
