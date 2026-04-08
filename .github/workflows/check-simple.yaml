@@ -79,8 +79,8 @@ jobs:
         name: Resolve build context
         env:
           GIT_COMMIT: ${{ steps.source.outputs.git-commit }}
-          DEB_PACKAGE: ${{ steps.source.outputs.package }}
-          DEB_VERSION: ${{ steps.source.outputs.version }}
+          DEB_PACKAGE: ${{ steps.acquire-buildmeta.outputs.package }}
+          DEB_VERSION: ${{ steps.acquire-buildmeta.outputs.version }}
           BUILDMETA: ${{ steps.source-buildmeta.outputs.json }}
         run: |
           buildenv=$(jq -c \
