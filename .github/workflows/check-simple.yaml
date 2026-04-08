@@ -39,6 +39,7 @@ jobs:
           git-ref: ${{ inputs.git-ref }}
           name: source
           permsrc: true
+          artifact: true
 
       - id: acquire-buildmeta
         name: Acquire buildmeta file
@@ -76,7 +77,7 @@ jobs:
 
           buildprov=$(jq -c \
             --arg git_url "${{ inputs.git-url }}" \
-            --arg git_commit "${{ steps.source.outputs.git-commit-sha }}" \
+            --arg git_commit "${{ steps.source.outputs.git-commit }}" \
             --arg deb_package "$deb_package" \
             --arg deb_version "$deb_version" \
             '{
