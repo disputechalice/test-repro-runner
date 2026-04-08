@@ -203,11 +203,11 @@ jobs:
 
           ## Reproducible build
 
-          | Verified                | ${STATUS_REPRO:-fail} |
-          |-------------------------|-----------------------|
-          | Source Git URL          | [$GIT_URL]($GIT_URL)  |
-          | Source Git commit       | $GIT_COMMIT           |
-          | Package checksum SHA256 | $DEB_SHA256           |
+          | Verified          | ${STATUS_REPRO:-fail} |
+          |-------------------|-----------------------|
+          | Source Git URL    | [$GIT_URL]($GIT_URL)  |
+          | Source Git commit | $GIT_COMMIT           |
+          | Package checksum  | $DEB_SHA256           |
 
           EOF
 
@@ -216,10 +216,10 @@ jobs:
 
           ## Distributed package
 
-          | Checksum    | ${STATUS_DIST:-fail} |
-          |-------------|----------------------|
-          | Package URL | [$DEB_URL]($DEB_URL) |
-
+          | Verified         | ${STATUS_DIST:-fail} |
+          |------------------|----------------------|
+          | Package URL      | [$DEB_URL]($DEB_URL) |
+          | Package checksum | $DEB_SHA256          |
           EOF
 
 
