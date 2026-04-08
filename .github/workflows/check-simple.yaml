@@ -13,6 +13,10 @@ on:
         required: false
         type: string
         default: source
+      package-name:
+        required: false
+        type: string
+        default: ''
 
 defaults:
   run:
@@ -20,26 +24,20 @@ defaults:
 
 jobs:
 
-  prepare:
+  prep:
     runs-on: ubuntu-latest
 
     env:
       GIT_URL: ${{ inputs.git-url }}
       GIT_REF: ${{ inputs.git-ref }}
       SOURCE: ${{ inputs.source-name }}
+      PACKAGE: ${{ inputs.package-name }}
 
     outputs:
-      buildenv: ${{ steps.resolve-context.outputs.buildenv }}
-      buildprov: ${{ steps.resolve-context.outputs.buildprov }}      
+      env-json: ${{ steps.context.outputs.env-json }}
+      prov-json: ${{ steps.context.outputs.prov-json }}      
 
     steps:
-      - name: Kit
-        uses: disputechalice/test-gh-actions/source-archive@main
-        with:
-          git-url: https://github.com/"$GITHUB_REPOSITORY".git
-          git-ref: main
-          name: kit
-
       - id: source
         name: Source
         uses: disputechalice/test-gh-actions/source-archive@main
@@ -50,46 +48,49 @@ jobs:
           permsrc: true
           artifact: true
 
-      - id: acquire-buildmeta
-        name: Acquire buildmeta file
+      - id: buildmeta-acq
+        name: Acquire buildmeta file and infer target package and version
         run: |
-          found_buildmeta=("$SOURCE"/*.buildmeta)
-          ((${#found_buildmeta[@]} == 1))
-          buildmeta=${found_buildmeta[0]}
+          seek_prefix="$SOURCE/${PACKAGE:+$PACKAGE}"
+          found=("$seek_prefix"*.buildmeta)        
+          ((${#found[@]} == 1))
 
-          [[ -f $buildmeta ]]
+          buildmeta_path=${found[0]}
+          [[ -f $buildmeta_path ]]
 
-          buildmeta_fname=${buildmeta##*/}
-          buildmeta_fname_bare="${buildmeta_fname%%.buildmeta}"
+          buildmeta_filename=${buildmeta_path##*/}
+          buildmeta_barename="${buildmeta_filename%%.buildmeta}"
 
           cat >> $GITHUB_OUTPUT << EOF
-          path=$buildmeta
-          package=${buildmeta_fname_bare%%_*}
-          version=${buildmeta_fname_bare#*_}
+          path=$buildmeta_path
+          package=${buildmeta_barename%%_*}
+          version=${buildmeta_barename#*_}
           EOF
 
-      - id: source-buildmeta
+      - id: buildmeta-var
         name: Source buildmeta file
         uses: disputechalice/test-gh-actions/env-to-json@main
         with:
-          sfile: ${{ steps.acquire-buildmeta.outputs.path }}
+          sfile: ${{ steps.buildmeta-acq.outputs.path }}
           vnames: SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE DEB_SHA256 DEB_URL
 
-      - id: resolve-context
+      - id: context
         name: Resolve build context
         env:
           GIT_COMMIT: ${{ steps.source.outputs.git-commit }}
-          DEB_PACKAGE: ${{ steps.acquire-buildmeta.outputs.package }}
-          DEB_VERSION: ${{ steps.acquire-buildmeta.outputs.version }}
-          BUILDMETA: ${{ steps.source-buildmeta.outputs.json }}
+          DEB_PACKAGE: ${{ steps.buildmeta-acq.outputs.package }}
+          DEB_VERSION: ${{ steps.buildmeta-acq.outputs.version }}
+          BUILDMETA: ${{ steps.buildmeta-var.outputs.json }}
         run: |
-          buildenv=$(jq -c \
+          : "${GIT_COMMIT:?}" "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${BUILDMETA:?}"
+
+          env_json=$(jq -c \
             '{
               source_date_epoch,
               dpkg_deb_compressor_type
             }' <<< "$BUILDMETA")
 
-          buildprov=$(jq -c \
+          prov_json=$(jq -c \
             --arg git_url "$GIT_URL" \
             --arg git_commit "$GIT_COMMIT" \
             --arg deb_package "$DEB_PACKAGE" \
@@ -104,22 +105,22 @@ jobs:
           }' <<< "$BUILDMETA")
 
           cat >> $GITHUB_OUTPUT << EOF
-          buildenv=$buildenv
-          buildprov=$buildprov
+          env-json=$env_json
+          prov-json=$prov_json
           EOF
 
   repro:  
-    needs: prepare
+    needs: prep
     runs-on: ubuntu-latest
     container: ghcr.io/disputechalice/builder-simple:latest
 
     env:
       SOURCE: ${{ inputs.source-name }}    
-      DEB_PACKAGE: ${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}
-      DEB_VERSION: ${{ fromJson(needs.prepare.outputs.buildprov).deb_version }}
-      DEB_SHA256: ${{ fromJson(needs.prepare.outputs.buildprov).deb_sha256 }}
-      SOURCE_DATE_EPOCH: ${{ fromJson(needs.prepare.outputs.buildenv).source_date_epoch }}
-      DPKG_DEB_COMPRESSOR_TYPE: ${{ fromJson(needs.prepare.outputs.buildenv).dpkg_deb_compressor_type }}
+      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov-json).deb_package }}
+      DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov-json).deb_version }}
+      DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov-json).deb_sha256 }}
+      SOURCE_DATE_EPOCH: ${{ fromJson(needs.prep.outputs.env-json).source_date_epoch }}
+      DPKG_DEB_COMPRESSOR_TYPE: ${{ fromJson(needs.prep.outputs.env-json).dpkg_deb_compressor_type }}
 
     outputs:
       status: ${{ steps.check.outputs.status }}
@@ -153,12 +154,12 @@ jobs:
           EOF
 
   dist:
-    needs: prepare
+    needs: prep
     runs-on: ubuntu-latest
 
     env:
-      DEB_SHA256: ${{ fromJson(needs.prepare.outputs.buildprov).deb_sha256 }}
-      DEB_URL: ${{ fromJson(needs.prepare.outputs.buildprov).deb_url }}
+      DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov-json).deb_sha256 }}
+      DEB_URL: ${{ fromJson(needs.prep.outputs.prov-json).deb_url }}
 
     outputs:
       status: ${{ steps.check.outputs.status }}
@@ -178,16 +179,16 @@ jobs:
           EOF
 
   report:
-    needs: [prepare, repro, dist]
+    needs: [prep, repro, dist]
     runs-on: ubuntu-latest
 
     env:
-      GIT_URL: ${{ fromJson(needs.prepare.outputs.buildprov).git_url }}
-      GIT_COMMIT: ${{ fromJson(needs.prepare.outputs.buildprov).git_commit }}
-      DEB_PACKAGE: ${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}
-      DEB_VERSION: ${{ fromJson(needs.prepare.outputs.buildprov).deb_version }}
-      DEB_URL: ${{ fromJson(needs.prepare.outputs.buildprov).deb_url }}
-      DEB_SHA256: ${{ fromJson(needs.prepare.outputs.buildprov).deb_sha256 }}
+      GIT_URL: ${{ fromJson(needs.prep.outputs.prov-json).git_url }}
+      GIT_COMMIT: ${{ fromJson(needs.prep.outputs.prov-json).git_commit }}
+      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov-json).deb_package }}
+      DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov-json).deb_version }}
+      DEB_URL: ${{ fromJson(needs.prep.outputs.prov-json).deb_url }}
+      DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov-json).deb_sha256 }}
       STATUS_REPRO: ${{ needs.repro.outputs.status }}
       STATUS_DIST: ${{ needs.dist.outputs.status }}
 
