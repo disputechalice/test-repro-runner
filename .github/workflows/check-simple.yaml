@@ -9,6 +9,10 @@ on:
       git-ref:
         required: true
         type: string
+      source-name:
+        required: false
+        type: string
+        default: source
 
 defaults:
   run:
@@ -18,6 +22,11 @@ jobs:
 
   prepare:
     runs-on: ubuntu-latest
+
+    env:
+      GIT_URL: ${{ inputs.git-url }}
+      GIT_REF: ${{ inputs.git-ref }}
+      SOURCE: ${{ inputs.source-name }}
 
     outputs:
       buildenv: ${{ steps.resolve-context.outputs.buildenv }}
@@ -35,16 +44,16 @@ jobs:
         name: Source
         uses: disputechalice/test-gh-actions/source-archive@main
         with:
-          git-url: ${{ inputs.git-url }}
-          git-ref: ${{ inputs.git-ref }}
-          name: source
+          git-url: ${{ env.GIT_URL }}
+          git-ref: ${{ env.GIT_REF }}
+          name: ${{ env.SOURCE }}
           permsrc: true
           artifact: true
 
       - id: acquire-buildmeta
         name: Acquire buildmeta file
         run: |
-          found_buildmeta=(source/*.buildmeta)
+          found_buildmeta=("$SOURCE"/*.buildmeta)
           ((${#found_buildmeta[@]} == 1))
           buildmeta=${found_buildmeta[0]}
           [[ -f $buildmeta ]]
@@ -59,6 +68,8 @@ jobs:
 
       - id: resolve-context
         name: Resolve build context
+        env:
+          GIT_COMMIT: ${{ steps.source.outputs.git-commit }}        
         run: |
           buildmeta="${{ steps.acquire-buildmeta.outputs.file }}"
           buildmeta_fname=${buildmeta##*/}
@@ -76,8 +87,8 @@ jobs:
             }' <<< "$meta")
 
           buildprov=$(jq -c \
-            --arg git_url "${{ inputs.git-url }}" \
-            --arg git_commit "${{ steps.source.outputs.git-commit }}" \
+            --arg git_url "$GIT_URL" \
+            --arg git_commit "$GIT_COMMIT" \
             --arg deb_package "$deb_package" \
             --arg deb_version "$deb_version" \
             '{
@@ -100,6 +111,7 @@ jobs:
     container: ghcr.io/disputechalice/builder-simple:latest
 
     env:
+      SOURCE: ${{ inputs.source-name }}    
       DEB_PACKAGE: ${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}
       DEB_VERSION: ${{ fromJson(needs.prepare.outputs.buildprov).deb_version }}
       DEB_SHA256: ${{ fromJson(needs.prepare.outputs.buildprov).deb_sha256 }}
@@ -113,7 +125,7 @@ jobs:
       - name: Get source archive
         uses: disputechalice/test-gh-actions/fetch-artifact-tar@main
         with:
-          name: source
+          name: ${{ env.SOURCE }}
 
       - id: check
         name: Check if build can be reproduced
@@ -121,11 +133,9 @@ jobs:
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}"
           : "${SOURCE_DATE_EPOCH:?}" "${DPKG_DEB_COMPRESSOR_TYPE:?}"
 
-          src_dir=source
-
           built_deb=$(mktemp /tmp/repro.XXXXXX.deb)
           export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
-          dpkg-deb --build --root-owner-group "$src_dir/$DEB_PACKAGE" "$built_deb"
+          dpkg-deb --build --root-owner-group "$SOURCE/$DEB_PACKAGE" "$built_deb"
 
           read -r built_package built_version <<< \
             "$(dpkg-deb --show --showformat='${Package} ${Version}\n' "$built_deb")"
@@ -157,6 +167,7 @@ jobs:
 
           dist_deb=$(mktemp /tmp/dist.XXXXXX.deb)
           wget --no-verbose -O "$dist_deb" "$DEB_URL"
+
           sha256sum --check <<< "$DEB_SHA256  $dist_deb"
 
           cat >> $GITHUB_OUTPUT << EOF
