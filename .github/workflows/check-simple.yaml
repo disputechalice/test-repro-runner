@@ -56,49 +56,52 @@ jobs:
           found_buildmeta=("$SOURCE"/*.buildmeta)
           ((${#found_buildmeta[@]} == 1))
           buildmeta=${found_buildmeta[0]}
+
           [[ -f $buildmeta ]]
-          echo "file=$buildmeta" >> $GITHUB_OUTPUT
+
+          buildmeta_fname=${buildmeta##*/}
+          buildmeta_fname_bare="${buildmeta_fname%%.buildmeta}"
+
+          cat >> $GITHUB_OUTPUT << EOF
+          path=$buildmeta
+          deb-package=${buildmeta_fname_bare%%_*}
+          deb-version=${buildmeta_fname_bare#*_}
+          EOF
 
       - id: source-buildmeta
         name: Source buildmeta file
         uses: disputechalice/test-gh-actions/env-to-json@main
         with:
-          sfile: ${{ steps.acquire-buildmeta.outputs.file }}
+          sfile: ${{ steps.acquire-buildmeta.outputs.path }}
           vnames: SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE DEB_SHA256 DEB_URL
 
       - id: resolve-context
         name: Resolve build context
         env:
-          GIT_COMMIT: ${{ steps.source.outputs.git-commit }}        
+          GIT_COMMIT: ${{ steps.source.outputs.git-commit }}
+          DEB_PACKAGE: ${{ steps.source.outputs.deb-package }}
+          DEB_VERSION: ${{ steps.source.outputs.deb-version }}
+          BUILDMETA: ${{ steps.source-buildmeta.outputs.json }}
         run: |
-          buildmeta="${{ steps.acquire-buildmeta.outputs.file }}"
-          buildmeta_fname=${buildmeta##*/}
-          buildmeta_fname_bare="${buildmeta_fname%%.buildmeta}"
-
-          deb_package=${buildmeta_fname_bare%%_*}
-          deb_version=${buildmeta_fname_bare#*_}
-
-          meta='${{ steps.source-buildmeta.outputs.json }}'
-
           buildenv=$(jq -c \
             '{
               source_date_epoch,
               dpkg_deb_compressor_type
-            }' <<< "$meta")
+            }' <<< "$BUILDMETA")
 
           buildprov=$(jq -c \
             --arg git_url "$GIT_URL" \
             --arg git_commit "$GIT_COMMIT" \
-            --arg deb_package "$deb_package" \
-            --arg deb_version "$deb_version" \
+            --arg deb_package "$DEB_PACKAGE" \
+            --arg deb_version "$DEB_VERSION" \
             '{
               git_url: $git_url,              
               git_commit: $git_commit,
               deb_package: $deb_package,
               deb_version: $deb_version,
-              deb_sha256: .deb_sha256,
-              deb_url: .deb_url
-          }' <<< "$meta")
+              deb_sha256,
+              deb_url
+          }' <<< "$BUILDMETA")
 
           cat >> $GITHUB_OUTPUT << EOF
           buildenv=$buildenv
