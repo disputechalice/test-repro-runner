@@ -99,6 +99,9 @@ jobs:
     runs-on: ubuntu-latest
     container: ghcr.io/disputechalice/builder-simple:latest
     needs: prepare
+    env:
+      DEB_PACKAGEX="${{ fromJson(needs.prepare.outputs.buildprov).deb_package }}"
+
     outputs:
       status: ${{ steps.check.outputs.status }}
 
