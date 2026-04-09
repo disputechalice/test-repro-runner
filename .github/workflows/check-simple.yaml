@@ -44,9 +44,9 @@ jobs:
         with:
           git-url: ${{ env.GIT_URL }}
           git-ref: ${{ env.GIT_REF }}
-          name: ${{ env.SOURCE }}
+          target: ./${{ env.SOURCE }}
           permsrc: true
-          artifact: true
+          artifact: ${{ env.SOURCE }}
 
       - id: buildmeta-acq
         name: Acquire buildmeta file and infer target package and version
@@ -129,7 +129,7 @@ jobs:
       - name: Get package payload
         uses: disputechalice/test-gh-actions/fetch-artifact-tar@main
         with:
-          name: ${{ env.SOURCE }}
+          artifact: ${{ env.SOURCE }}
           target: ./${{ env.DEB_PACKAGE }}
           prefix: ./${{ env.DEB_PACKAGE }}
 
