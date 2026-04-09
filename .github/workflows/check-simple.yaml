@@ -126,10 +126,11 @@ jobs:
       status: ${{ steps.check.outputs.status }}
 
     steps:
-      - name: Get source archive
+      - name: Get package payload from the source archive
         uses: disputechalice/test-gh-actions/fetch-artifact-tar@main
         with:
           name: ${{ env.SOURCE }}
+          target: ./${{ env.DEB_PACKAGE }}
           prefix: ./${{ env.DEB_PACKAGE }}
 
       - id: check
@@ -140,7 +141,7 @@ jobs:
 
           built_deb=$(mktemp /tmp/repro.XXXXXX.deb)
           export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
-          dpkg-deb --build --root-owner-group "$SOURCE" "$built_deb"
+          dpkg-deb --build --root-owner-group "$DEB_PACKAGE" "$built_deb"
 
           read -r built_package built_version <<< \
             "$(dpkg-deb --show --showformat='${Package} ${Version}\n' "$built_deb")"
