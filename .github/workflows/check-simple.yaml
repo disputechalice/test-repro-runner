@@ -51,6 +51,7 @@ jobs:
       - id: buildmeta-acq
         name: Acquire buildmeta file and infer target package and version
         run: |
+          trap 'echo "E $? L $LINENO"' ERR
           seek_prefix="$SOURCE/${PACKAGE:+$PACKAGE}"
           found=("$seek_prefix"*.buildmeta)        
           ((${#found[@]} == 1))
