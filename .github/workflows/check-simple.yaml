@@ -157,6 +157,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov-json).deb_package }}
+      DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov-json).deb_version }}
       DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov-json).deb_sha256 }}
       DEB_URL: ${{ fromJson(needs.prep.outputs.prov-json).deb_url }}
 
