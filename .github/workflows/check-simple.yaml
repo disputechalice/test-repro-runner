@@ -168,7 +168,7 @@ jobs:
       - id: check
         name: Check retrieved dist package
         run: |
-          : "${DEB_SHA256:?}" "${DEB_URL:?}"
+          : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}" "${DEB_URL:?}"
 
           dist_deb=$(mktemp /tmp/dist.XXXXXX.deb)
           wget --no-verbose -O "$dist_deb" "$DEB_URL"
