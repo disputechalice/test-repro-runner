@@ -51,7 +51,8 @@ jobs:
       - id: buildmeta-acq
         name: Acquire buildmeta file
         run: |
-          # Ensure single .buildmeta file for specific prefix, infer target package name/version
+          # Identify .buildmeta file in the source, infer target package name/version
+          # Ensure single file only per package (optional input, otherwise single package source)
           exec 3> >(tee /dev/stderr >> "$GITHUB_OUTPUT")
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${SOURCE:?}"
@@ -77,7 +78,7 @@ jobs:
         uses: disputechalice/test-gh-actions/env-to-json@main
         with:
           source-file: ${{ steps.buildmeta-acq.outputs.path }}
-          vartiable-names: SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE DEB_SHA256 DEB_URL
+          variable-names: SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE DEB_SHA256 DEB_URL
 
       - id: context
         name: Resolve build context
@@ -87,7 +88,7 @@ jobs:
           DEB_VERSION: ${{ steps.buildmeta-acq.outputs.version }}
           BUILDMETA: ${{ steps.buildmeta-var.outputs.json }}
         run: |
-          # Split build environment and provenance-only data into declarative JSON
+          # Split build-environment and provenance data as JSON
           exec 3> >(tee /dev/stderr >> "$GITHUB_OUTPUT")
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${GIT_COMMIT:?}" "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${BUILDMETA:?}"
