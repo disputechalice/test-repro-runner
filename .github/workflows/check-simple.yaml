@@ -49,8 +49,9 @@ jobs:
           artifact: ${{ env.SOURCE }}
 
       - id: buildmeta-acq
-        name: Acquire buildmeta file and infer target package and version
+        name: Acquire buildmeta file
         run: |
+          # Ensure single .buildmeta file for specific prefix, infer target package name/version
           exec 3> >(tee /dev/stderr >> "$GITHUB_OUTPUT")
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${SOURCE:?}"
@@ -72,7 +73,7 @@ jobs:
           EOF
 
       - id: buildmeta-var
-        name: Source buildmeta file
+        name: Process buildmeta variables
         uses: disputechalice/test-gh-actions/env-to-json@main
         with:
           sfile: ${{ steps.buildmeta-acq.outputs.path }}
@@ -86,7 +87,7 @@ jobs:
           DEB_VERSION: ${{ steps.buildmeta-acq.outputs.version }}
           BUILDMETA: ${{ steps.buildmeta-var.outputs.json }}
         run: |
-          # step: context
+          # Split build environment and provenance-only data into declarative JSON
           exec 3> >(tee /dev/stderr >> "$GITHUB_OUTPUT")
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${GIT_COMMIT:?}" "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${BUILDMETA:?}"
@@ -143,6 +144,7 @@ jobs:
       - id: check
         name: Check self-built repro package
         run: |
+          # Build package from source, verify correct name/version/checksum
           exec 3> >(tee /dev/stderr >> "$GITHUB_OUTPUT")
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}"
@@ -178,6 +180,7 @@ jobs:
       - id: check
         name: Check retrieved dist package
         run: |
+          # Retrieve package from URL, verify correct name/version/checksum
           exec 3> >(tee /dev/stderr >> "$GITHUB_OUTPUT")
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}" "${DEB_URL:?}"
@@ -211,6 +214,7 @@ jobs:
     steps:
       - name: Report summary
         run: |
+          # Build markdown summary, fail overall on any single fail
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${GIT_URL:?}" "${GIT_COMMIT:?}"           
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_URL:?}" "${DEB_SHA256:?}"
