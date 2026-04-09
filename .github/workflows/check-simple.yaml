@@ -52,12 +52,13 @@ jobs:
         name: Acquire buildmeta file and infer target package and version
         run: |
           trap 'echo >&2 E$? L$LINENO' ERR
-          seek_prefix="$SOURCE/${PACKAGE:+$PACKAGE}"
-          found=("$seek_prefix"*.buildmeta)        
+
+          prefix="$SOURCE/${PACKAGE:+$PACKAGE}"
+          found=("$prefix"*.buildmeta)        
           ((${#found[@]} == 1))
 
           buildmeta_path=${found[0]}
-          [[ -f $buildmeta_path ]]
+          test -f $buildmeta_path
 
           buildmeta_filename=${buildmeta_path##*/}
           buildmeta_barename="${buildmeta_filename%%.buildmeta}"
@@ -83,6 +84,7 @@ jobs:
           DEB_VERSION: ${{ steps.buildmeta-acq.outputs.version }}
           BUILDMETA: ${{ steps.buildmeta-var.outputs.json }}
         run: |
+          trap 'echo >&2 E$? L$LINENO' ERR
           : "${GIT_COMMIT:?}" "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${BUILDMETA:?}"
 
           env_json=$(jq -c \
@@ -137,6 +139,7 @@ jobs:
       - id: check
         name: Check self-built repro package
         run: |
+          trap 'echo >&2 E$? L$LINENO' ERR
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}"
           : "${SOURCE_DATE_EPOCH:?}" "${DPKG_DEB_COMPRESSOR_TYPE:?}"
 
@@ -169,6 +172,7 @@ jobs:
       - id: check
         name: Check retrieved dist package
         run: |
+          trap 'echo >&2 E$? L$LINENO' ERR
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}" "${DEB_URL:?}"
 
           dist_deb=$(mktemp /tmp/dist.XXXXXX.deb)
@@ -200,6 +204,7 @@ jobs:
     steps:
       - name: Report summary
         run: |
+          trap 'echo >&2 E$? L$LINENO' ERR
           : "${GIT_URL:?}" "${GIT_COMMIT:?}"           
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_URL:?}" "${DEB_SHA256:?}"
 
