@@ -76,8 +76,8 @@ jobs:
         name: Process buildmeta variables
         uses: disputechalice/test-gh-actions/env-to-json@main
         with:
-          sfile: ${{ steps.buildmeta-acq.outputs.path }}
-          vnames: SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE DEB_SHA256 DEB_URL
+          source-file: ${{ steps.buildmeta-acq.outputs.path }}
+          vartiable-names: SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE DEB_SHA256 DEB_URL
 
       - id: context
         name: Resolve build context
