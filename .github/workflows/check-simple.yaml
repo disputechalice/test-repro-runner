@@ -52,6 +52,7 @@ jobs:
         name: Acquire buildmeta file and infer target package and version
         run: |
           trap 'echo >&2 E$? L$LINENO' ERR
+          : "${SOURCE:?}"
 
           prefix="$SOURCE/${PACKAGE:+$PACKAGE}"
           found=("$prefix"*.buildmeta)        
@@ -168,6 +169,7 @@ jobs:
 
     outputs:
       status: ${{ steps.check.outputs.status }}
+
     steps:
       - id: check
         name: Check retrieved dist package
@@ -218,7 +220,6 @@ jobs:
           | Version | *$DEB_VERSION* |
           EOF
 
-
           tee -a "report.md" >&2 << EOF
 
           ## Reproducible build
@@ -231,7 +232,6 @@ jobs:
 
           EOF
 
-
           tee -a "report.md" >&2 << EOF
 
           ## Distributed package
@@ -241,7 +241,6 @@ jobs:
           | Package checksum | $DEB_SHA256          |
           | Package URL      | [$DEB_URL]($DEB_URL) |
           EOF
-
 
           cat report.md >> $GITHUB_STEP_SUMMARY
 
