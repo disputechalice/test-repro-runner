@@ -126,7 +126,7 @@ jobs:
       status: ${{ steps.check.outputs.status }}
 
     steps:
-      - name: Get package payload from the source archive
+      - name: Get package payload
         uses: disputechalice/test-gh-actions/fetch-artifact-tar@main
         with:
           name: ${{ env.SOURCE }}
@@ -134,7 +134,7 @@ jobs:
           prefix: ./${{ env.DEB_PACKAGE }}
 
       - id: check
-        name: Check if build can be reproduced
+        name: Check self-built repro package
         run: |
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}"
           : "${SOURCE_DATE_EPOCH:?}" "${DPKG_DEB_COMPRESSOR_TYPE:?}"
@@ -164,12 +164,15 @@ jobs:
       status: ${{ steps.check.outputs.status }}
     steps:
       - id: check
-        name: Check if distributed package checksum matches
+        name: Check retrieved dist package
         run: |
           : "${DEB_SHA256:?}" "${DEB_URL:?}"
 
           dist_deb=$(mktemp /tmp/dist.XXXXXX.deb)
           wget --no-verbose -O "$dist_deb" "$DEB_URL"
+
+          dist="$(dpkg-deb --show --showformat='${Package}|${Version}' "$dist_deb")"
+          [[ "$dist" == "$DEB_PACKAGE|$DEB_VERSION" ]]
 
           sha256sum --check <<< "$DEB_SHA256  $dist_deb"
 
