@@ -130,7 +130,7 @@ jobs:
         uses: disputechalice/test-gh-actions/fetch-artifact-tar@main
         with:
           name: ${{ env.SOURCE }}
-          prefix: ${{ env.DEB_PACKAGE }}
+          prefix: ./${{ env.DEB_PACKAGE }}
 
       - id: check
         name: Check if build can be reproduced
