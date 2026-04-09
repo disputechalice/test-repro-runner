@@ -86,6 +86,7 @@ jobs:
           DEB_VERSION: ${{ steps.buildmeta-acq.outputs.version }}
           BUILDMETA: ${{ steps.buildmeta-var.outputs.json }}
         run: |
+          # step: context
           exec 3> >(tee /dev/stderr >> "$GITHUB_OUTPUT")
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${GIT_COMMIT:?}" "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${BUILDMETA:?}"
