@@ -8,5 +8,3 @@ jobs:
     with:
       git-url: https://github.com/free-pmx/free-pmx-no-subscription.git
       git-ref: main
-      source-name: repo
-      package-name: free-pmx-no-subscription
