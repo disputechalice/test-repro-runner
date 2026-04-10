@@ -40,7 +40,7 @@ jobs:
     steps:
       - id: source
         name: Source
-        uses: disputechalice/test-gh-actions/git-tree@main
+        uses: disputechalice/test-gh-actions/tree-from-gitref@main
         with:
           git-url: ${{ env.GIT_URL }}
           git-ref: ${{ env.GIT_REF }}
@@ -136,7 +136,7 @@ jobs:
 
     steps:
       - name: Get package payload
-        uses: disputechalice/test-gh-actions/artifact-tree@main
+        uses: disputechalice/test-gh-actions/tree-from-artifact@main
         with:
           artifact: ${{ env.SOURCE }}
           target: ./${{ env.DEB_PACKAGE }}
