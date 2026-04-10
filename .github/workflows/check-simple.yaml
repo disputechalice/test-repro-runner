@@ -39,7 +39,7 @@ jobs:
 
     steps:
       - id: source
-        name: Source
+        name: Normalize source tree into artifact
         uses: disputechalice/test-gh-actions/tree-from-gitref@main
         with:
           git-url: ${{ env.GIT_URL }}
