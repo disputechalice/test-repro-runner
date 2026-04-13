@@ -90,6 +90,12 @@ jobs:
             --digestfile digest \
             "$IMAGE:$IMAGE_TAG"
 
+          echo "Digest file:"
+          cat digest
+          DIGEST=$(buildah inspect "$IMAGE:$IMAGE_TAG" | jq -r '.Digest')
+          echo "Digest as inspected:"
+          echo "$DIGEST"
+
           cat >> $GITHUB_OUTPUT << EOF
           image-digest=$(cat digest)
           EOF
