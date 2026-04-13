@@ -121,7 +121,7 @@ jobs:
   repro:  
     needs: prep
     runs-on: ubuntu-latest
-    container: ghcr.io/disputechalice/builder-simple:latest
+    container: ghcr.io/disputechalice/builder-plain:latest
 
     env:
       SOURCE: ${{ inputs.source-name }}    
