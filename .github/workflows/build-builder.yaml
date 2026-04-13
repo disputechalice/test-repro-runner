@@ -47,15 +47,12 @@ jobs:
           path: def
 
       - name: Prep environment
-        run: |
-          export APT_CONFIG=$(realpath def/builder/apt.conf)
-          export DEBIAN_FRONTEND=noninteractive
-
-          sudo -E apt-get update
-          sudo -E apt-get satisfy \
-            debian-archive-keyring \
-            bdebstrap \
-            buildah \
+        uses: disputechalice/test-gh-actions/apt-satisfy@main
+        with:
+          expression: >
+            debian-archive-keyring
+            bdebstrap
+            buildah
             podman
 
       - id: build
