@@ -1,4 +1,4 @@
-name: build builder
+name: build builder from definition
 
 on:
   workflow_call:
@@ -10,22 +10,22 @@ on:
         required: false
         type: string
         default: main
-      image_name:
-        required: false
+      def-name:
+        required: true
         type: string
-        default: builder-simple
       image_tag:
         required: false
         type: string
         default: latest
 
 env:
-  IMAGE: ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}
+  BUILD_SCRIPT: def/${{ inputs.def-name }}/build
+  BOOTSTRAP_YAML: def/${{ inputs.def-name }}/bootstrap.yaml
+  IMAGE: ghcr.io/${{ github.repository_owner }}/builder-${{ inputs.def-name }}
   TAG: ${{ inputs.image_tag }}
   SOURCE: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
   AUTHORS: ${{ github.repository_owner }}
-  DESCRIPTION: Builder image
-  BOOTSTRAP: def/builder/bootstrap.yaml
+  DESCRIPTION: Builder-${{ inputs.def-name }}
   SOURCE_DATE_EPOCH: 1775941938
 
 jobs:
@@ -39,14 +39,7 @@ jobs:
         shell: bash
 
     steps:
-      - name: Checkout def
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ inputs.def_repo }}
-          ref: ${{ inputs.def_ref }}
-          path: def
-
-      - name: Prep environment
+      - name: Prep runner toolset
         uses: disputechalice/test-gh-actions/apt-satisfy@main
         with:
           expression: >
@@ -54,13 +47,19 @@ jobs:
             bdebstrap
             buildah
             podman
+      - name: Checkout def
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.def_repo }}
+          ref: ${{ inputs.def_ref }}
+          path: def
 
       - id: build
         name: Build image
         run: |
-          export SOURCE_DATE_EPOCH BOOTSTRAP IMAGE TAG SOURCE AUTHORS DESCRIPTION
+          export SOURCE_DATE_EPOCH IMAGE TAG SOURCE AUTHORS DESCRIPTION
 
-          buildah unshare def/builder/build
+          buildah unshare "$BUILD_SCRIPT"
 
           cat >> $GITHUB_OUTPUT << EOF
           rootfs-diffid-0=$(buildah inspect "$IMAGE:$TAG" | jq -r '.OCIv1.rootfs.diff_ids[0]')
@@ -104,9 +103,9 @@ jobs:
           pushed image: $IMAGE_DIGEST
 
           \`\`\`
-          $(yq '.mmdebstrap.suite' "$BOOTSTRAP")
-          $(yq '.mmdebstrap.variant' "$BOOTSTRAP")
-          $(yq '.mmdebstrap.mirrors' "$BOOTSTRAP")          
+          $(yq '.mmdebstrap.suite' "$BOOTSTRAP_YAML")
+          $(yq '.mmdebstrap.variant' "$BOOTSTRAP_YAML")
+          $(yq '.mmdebstrap.mirrors' "$BOOTSTRAP_YAML")          
           \`\`\`
           EOF
 
