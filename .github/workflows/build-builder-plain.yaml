@@ -12,5 +12,5 @@ jobs:
     with:
       def_repo: disputechalice/builder
       def_ref: main
-      image_name: builder-simple
+      image_name: builder-plain
       image_tag: latest
