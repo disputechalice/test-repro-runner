@@ -3,17 +3,17 @@ name: build builder from definition
 on:
   workflow_call:
     inputs:
-      def_repo:
+      def-repo:
         required: true
         type: string
-      def_ref:
+      def-ref:
         required: false
         type: string
         default: main
       def-name:
         required: true
         type: string
-      image_tag:
+      image-tag:
         required: false
         type: string
         default: latest
@@ -22,7 +22,7 @@ env:
   BUILD_SCRIPT: def/${{ inputs.def-name }}/build
   BOOTSTRAP_YAML: def/${{ inputs.def-name }}/bootstrap.yaml
   IMAGE: ghcr.io/${{ github.repository_owner }}/builder-${{ inputs.def-name }}
-  TAG: ${{ inputs.image_tag }}
+  TAG: ${{ inputs.image-tag }}
   SOURCE: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
   AUTHORS: ${{ github.repository_owner }}
   DESCRIPTION: Builder-${{ inputs.def-name }}
@@ -50,8 +50,8 @@ jobs:
       - name: Checkout def
         uses: actions/checkout@v4
         with:
-          repository: ${{ inputs.def_repo }}
-          ref: ${{ inputs.def_ref }}
+          repository: ${{ inputs.def-repo }}
+          ref: ${{ inputs.def-ref }}
           path: def
 
       - id: build

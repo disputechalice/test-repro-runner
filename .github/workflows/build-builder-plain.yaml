@@ -10,7 +10,7 @@ jobs:
       packages: write
     uses: ./.github/workflows/build-builder.yaml
     with:
-      def_repo: disputechalice/builder
-      def_ref: main
-      image_name: builder-plain
-      image_tag: latest
+      def-repo: disputechalice/builder
+      def-ref: main
+      def-name: plain
+      image-tag: latest
