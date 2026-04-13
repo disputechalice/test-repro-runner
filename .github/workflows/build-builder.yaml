@@ -72,7 +72,7 @@ jobs:
           buildah unshare "$BUILD_SCRIPT"
 
           cat >> $GITHUB_OUTPUT << EOF
-          rootfs-diffid-0=$(buildah inspect "$IMAGE_NAME" | jq -r '.OCIv1.rootfs.diff_ids[0]')
+          rootfs-diffids=$(buildah inspect "$IMAGE_NAME" | jq -c '.OCIv1.rootfs.diff_ids')          
           EOF
 
       - name: Check image
@@ -83,7 +83,7 @@ jobs:
       - id: push
         name: Push to Registry
         env:
-          IMAGE_REVISION: ${{ steps.def.outputs.git-commit }}
+          ROOTFS_DIFFID0: ${{ fromJSON(steps.build.outputs.rootfs-diffids)[0] }}
 
         run: |
           buildah login ghcr.io \
@@ -96,8 +96,8 @@ jobs:
             --digestfile digestfile \
             "$IMAGE:$IMAGE_TAG"
 
-          buildah tag "$IMAGE_NAME" "$IMAGE:rev-$IMAGE_REVISION"
-          buildah push "$IMAGE:rev-$IMAGE_REVISION"
+          buildah tag "$IMAGE_NAME" "$IMAGE:rdid0-$ROOTFS_DIFFID0"
+          buildah push "$IMAGE:rdid0-$ROOTFS_DIFFID0"
 
           cat >> $GITHUB_OUTPUT << EOF
           image-digest=$(cat digestfile)
@@ -105,7 +105,7 @@ jobs:
 
       - name: Summarize
         env:
-          ROOTFS_DIFFID0: ${{ steps.build.outputs.rootfs-diffid-0 }}
+          ROOTFS_DIFFID0: ${{ fromJSON(steps.build.outputs.rootfs-diffids)[0] }}
           IMAGE_DIGEST: ${{ steps.push.outputs.image-digest }}
           GIT_COMMIT: ${{ steps.def.outputs.git-commit }}
           TAR_SHA256: ${{ steps.def.outputs.tar-sha256 }}
