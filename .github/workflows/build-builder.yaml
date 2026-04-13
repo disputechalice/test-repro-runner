@@ -28,6 +28,7 @@ env:
   BUILD_SCRIPT: def/${{ inputs.def-name }}/build
   BOOTSTRAP_YAML: def/${{ inputs.def-name }}/bootstrap.yaml
   IMAGE: ghcr.io/${{ github.repository_owner }}/builder-${{ inputs.def-name }}
+  IMAGE_NAME: ${{ github.repository_owner }}-builder-${{ inputs.def-name }}
   IMAGE_TAG: ${{ inputs.image-tag }}
 
 jobs:
@@ -66,17 +67,17 @@ jobs:
           IMAGE_DESCRIPTION: Builder-${{ inputs.def-name }}
 
         run: |
-          export SOURCE_DATE_EPOCH IMAGE IMAGE_{TAG,URL,SOURCE,REVISION,AUTHORS,DESCRIPTION}
+          export SOURCE_DATE_EPOCH IMAGE IMAGE_{NAME,TAG,URL,SOURCE,REVISION,AUTHORS,DESCRIPTION}
 
           buildah unshare "$BUILD_SCRIPT"
 
           cat >> $GITHUB_OUTPUT << EOF
-          rootfs-diffid-0=$(buildah inspect "$IMAGE:$IMAGE_TAG" | jq -r '.OCIv1.rootfs.diff_ids[0]')
+          rootfs-diffid-0=$(buildah inspect "$IMAGE_NAME" | jq -r '.OCIv1.rootfs.diff_ids[0]')
           EOF
 
       - name: Check image
         run: |
-          source <(podman run --pull=never "$IMAGE:$IMAGE_TAG" cat /etc/os-release)
+          source <(podman run --pull=never "$IMAGE_NAME" cat /etc/os-release)
           [[ $ID == debian ]]
 
       - id: push
@@ -89,16 +90,17 @@ jobs:
             -u "${{ github.actor }}" \
             --password-stdin <<< "${{ secrets.GITHUB_TOKEN }}"
 
+          buildah tag "$IMAGE_NAME" "$IMAGE:$IMAGE_TAG"
+
           buildah push \
-            --digestfile digest \
+            --digestfile digestfile \
             "$IMAGE:$IMAGE_TAG"
 
-          buildah tag "$IMAGE:$IMAGE_TAG" "$IMAGE:rev-$IMAGE_REVISION"
+          buildah tag "$IMAGE_NAME" "$IMAGE:rev-$IMAGE_REVISION"
           buildah push "$IMAGE:rev-$IMAGE_REVISION"
 
-
           cat >> $GITHUB_OUTPUT << EOF
-          image-digest=$(cat digest)
+          image-digest=$(cat digestfile)
           EOF
 
       - name: Summarize
