@@ -96,8 +96,9 @@ jobs:
             --digestfile digestfile \
             "$IMAGE:$IMAGE_TAG"
 
-          buildah tag "$IMAGE_NAME" "$IMAGE:rdid0-$ROOTFS_DIFFID0"
-          buildah push "$IMAGE:rdid0-$ROOTFS_DIFFID0"
+          tagged="$IMAGE:rdid0-${ROOTFS_DIFFID0#*:}"
+          buildah tag "$IMAGE_NAME" "$tagged"
+          buildah push "$tagged"
 
           cat >> $GITHUB_OUTPUT << EOF
           image-digest=$(cat digestfile)
