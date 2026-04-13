@@ -18,7 +18,6 @@ on:
         required: false
         type: string
         default: latest
-    secrets: inherit
 
 env:
   IMAGE: ghcr.io/${{ github.repository_owner }}/${{ inputs.image_name }}
@@ -35,6 +34,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+    secrets: inherit
     defaults:
       run:
         shell: bash
