@@ -83,8 +83,7 @@ jobs:
       - id: push
         name: Push to Registry
         env:
-          ROOTFS_DIFFID0: ${{ fromJSON(steps.build.outputs.rootfs-diffids)[0] }}
-
+          RUN_ID: ${{ github.run_id }}
         run: |
           buildah login ghcr.io \
             -u "${{ github.actor }}" \
@@ -96,7 +95,7 @@ jobs:
             --digestfile digestfile \
             "$IMAGE:$IMAGE_TAG"
 
-          tagged="$IMAGE:rdid0-${ROOTFS_DIFFID0#*:}"
+          tagged="$IMAGE:r-$RUN_ID"
           buildah tag "$IMAGE_NAME" "$tagged"
           buildah push "$tagged"
 
@@ -118,7 +117,7 @@ jobs:
           tee -a "report.md" >&2 << EOF
           $IMAGE : $IMAGE_TAG
 
-          rootfs diffid 0: $ROOTFS_DIFFID0
+          rootfs diffid 0: ${ROOTFS_DIFFID0#*:}
 
           pushed image: $IMAGE_DIGEST
 
