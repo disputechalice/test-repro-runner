@@ -4,7 +4,7 @@ on:
 
 jobs:
   no-subscription:
-    uses: ./.github/workflows/reusable/check-plain.yaml
+    uses: ./.github/workflows/_check-plain.yaml
     with:
       git-url: https://github.com/free-pmx/free-pmx-no-subscription.git
       git-ref: main
