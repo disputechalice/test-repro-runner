@@ -81,6 +81,9 @@ jobs:
 
       - id: push
         name: Push to Registry
+        env:
+          IMAGE_REVISION: ${{ steps.def.outputs.git-commit }}
+
         run: |
           buildah login ghcr.io \
             -u "${{ github.actor }}" \
