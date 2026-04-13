@@ -49,7 +49,8 @@ jobs:
             buildah
             podman
 
-      - name: Fetch def tree
+      - id: def
+        name: Fetch def tree
         uses: disputechalice/test-gh-actions/tree-from-gitref@main
         with:
           git-url: ${{ inputs.def-repo }}
@@ -91,7 +92,8 @@ jobs:
         env:
           ROOTFS_DIFFID0: ${{ steps.build.outputs.rootfs-diffid-0 }}
           IMAGE_DIGEST: ${{ steps.push.outputs.image-digest }}
-
+          GIT_COMMIT: ${{ steps.def.outputs.git-commit }}
+          TAR_SHA256: ${{ steps.def.outputs.tar-sha256 }}
         run: |
           # Build markdown summary
           trap 'echo >&2 E$? L$LINENO' ERR
@@ -109,6 +111,10 @@ jobs:
           $(yq '.mmdebstrap.variant' "$BOOTSTRAP_YAML")
           $(yq '.mmdebstrap.mirrors' "$BOOTSTRAP_YAML")          
           \`\`\`
+
+          Image def:
+          - from commit $GIT_COMMIT
+          - tarball SHA256: $TAR_SHA256
           EOF
 
           cat report.md >> $GITHUB_STEP_SUMMARY
