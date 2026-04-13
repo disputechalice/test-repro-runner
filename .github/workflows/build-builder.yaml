@@ -50,7 +50,7 @@ jobs:
             podman
 
       - name: Fetch def tree
-        uses: disputechalice/test-gh-actions/tree-from-git-ref@main
+        uses: disputechalice/test-gh-actions/tree-from-gitref@main
         with:
           git-url: ${{ inputs.def-repo }}
           git-ref: ${{ inputs.def-ref }}
