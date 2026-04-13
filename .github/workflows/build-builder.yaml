@@ -18,6 +18,10 @@ on:
         type: string
         default: latest
 
+defaults:
+  run:
+    shell: bash
+
 env:
   BUILD_SCRIPT: def/${{ inputs.def-name }}/build
   BOOTSTRAP_YAML: def/${{ inputs.def-name }}/bootstrap.yaml
@@ -34,9 +38,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-    defaults:
-      run:
-        shell: bash
 
     steps:
       - name: Prep runner toolset
@@ -47,12 +48,13 @@ jobs:
             bdebstrap
             buildah
             podman
-      - name: Checkout def
-        uses: actions/checkout@v4
+
+      - name: Fetch def tree
+        uses: disputechalice/test-gh-actions/tree-from-git-ref@main
         with:
-          repository: ${{ inputs.def-repo }}
-          ref: ${{ inputs.def-ref }}
-          path: def
+          git-url: ${{ inputs.def-repo }}
+          git-ref: ${{ inputs.def-ref }}
+          target: def
 
       - id: build
         name: Build image
