@@ -5,6 +5,9 @@ on:
 
 jobs:
   build:
+    permissions:
+      contents: read
+      packages: write
     uses: ./.github/workflows/build-builder.yaml
     with:
       def_repo: disputechalice/builder
