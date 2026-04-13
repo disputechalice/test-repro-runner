@@ -30,7 +30,6 @@ env:
   SOURCE: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
   AUTHORS: ${{ github.repository_owner }}
   DESCRIPTION: Builder-${{ inputs.def-name }}
-  SOURCE_DATE_EPOCH: 1775941938
 
 jobs:
   create:
@@ -59,6 +58,8 @@ jobs:
 
       - id: build
         name: Build image
+        env:
+          SOURCE_DATE_EPOCH: ${{ steps.def.outputs.git-commit-epoch }}
         run: |
           export SOURCE_DATE_EPOCH IMAGE TAG SOURCE AUTHORS DESCRIPTION
 
