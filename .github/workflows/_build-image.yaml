@@ -16,10 +16,10 @@ on:
       image-name:
         required: true
         type: string
-      image-tag:
+      image-tags:
         required: false
         type: string
-        default: latest
+        default: '["latest"]'
 
 defaults:
   run:
@@ -30,7 +30,7 @@ env:
   GIT_REF: ${{ inputs.git-ref }}
   CR_URL: ghcr.io/${{ github.repository_owner }}
   IMAGE_NAME: ${{ inputs.image-name }}
-  IMAGE_TAG: ${{ inputs.image-tag }}
+  IMAGE_TAGS: ${{ inputs.image-tags }}
 
 jobs:
   create:
@@ -88,15 +88,11 @@ jobs:
 
           IMAGE_REPO="$CR_URL/$IMAGE_NAME"
 
-          buildah tag "$IMAGE_NAME" "$IMAGE_REPO:$IMAGE_TAG"
-
-          buildah push \
-            --digestfile digestfile \
-            "$IMAGE_REPO:$IMAGE_TAG"
-
-          tagged="$IMAGE_REPO:r-$RUN_ID"
-          buildah tag "$IMAGE_NAME" "$tagged"
-          buildah push "$tagged"
+          for tag in $(echo $IMAGE_TAGS | jq -r '.[]'); do
+            buildah tag "$IMAGE_NAME" "$IMAGE_REPO:$tag"
+            buildah push "$IMAGE_REPO:$tag" --digestfile digestfile
+            echo "Pushed with tag: $tag"
+          done
 
           tee -a "$GITHUB_OUTPUT" >&2 << EOF
           image-repo=$IMAGE_REPO
