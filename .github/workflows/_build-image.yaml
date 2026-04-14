@@ -110,7 +110,7 @@ jobs:
         run: |
           # Build markdown summary
           trap 'echo >&2 E$? L$LINENO' ERR
-          : "${IMAGE_PUSHED_DIGEST:?}"
+          : "${IMAGE_DIGEST:?}"
 
           REPORT="$(mktemp /tmp/report.XXXXXX.md)"
 
