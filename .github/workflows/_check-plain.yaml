@@ -1,4 +1,4 @@
-name: Check plain package
+name: "[Check plain package]"
 
 on:
   workflow_call:
