@@ -53,7 +53,6 @@ jobs:
         run: |
           # Identify .buildmeta file in the source, infer target package name/version
           # Ensure single file only per package (optional input, otherwise single package source)
-          exec 3> >(tee /dev/stderr >> "$GITHUB_OUTPUT")
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${SOURCE:?}"
 
@@ -62,12 +61,12 @@ jobs:
           ((${#found[@]} == 1))
 
           buildmeta_path=${found[0]}
-          test -f $buildmeta_path
+          test -f "$buildmeta_path"
 
           buildmeta_filename=${buildmeta_path##*/}
           buildmeta_barename="${buildmeta_filename%%.buildmeta}"
 
-          cat >&3 << EOF
+          cat >(tee -a "$GITHUB_OUTPUT" >&2) << EOF
           path=$buildmeta_path
           package=${buildmeta_barename%%_*}
           version=${buildmeta_barename#*_}
@@ -89,7 +88,6 @@ jobs:
           BUILDMETA: ${{ steps.buildmeta-var.outputs.json }}
         run: |
           # Split build-environment and provenance data as JSON
-          exec 3> >(tee /dev/stderr >> "$GITHUB_OUTPUT")
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${GIT_COMMIT:?}" "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${BUILDMETA:?}"
 
@@ -113,7 +111,7 @@ jobs:
               deb_url
           }' <<< "$BUILDMETA")
 
-          cat >&3 << EOF
+          cat >(tee -a "$GITHUB_OUTPUT" >&2) << EOF
           env-json=$env_json
           prov-json=$prov_json
           EOF
@@ -146,7 +144,6 @@ jobs:
         name: Check self-built repro package
         run: |
           # Build package from source, verify correct name/version/checksum
-          exec 3> >(tee /dev/stderr >> "$GITHUB_OUTPUT")
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}"
           : "${SOURCE_DATE_EPOCH:?}" "${DPKG_DEB_COMPRESSOR_TYPE:?}"
@@ -160,7 +157,7 @@ jobs:
 
           sha256sum --check <<< "$DEB_SHA256  $built_deb"
 
-          cat >&3 << EOF
+          cat >(tee -a "$GITHUB_OUTPUT" >&2) << EOF
           status=pass
           EOF
 
@@ -182,7 +179,6 @@ jobs:
         name: Check retrieved dist package
         run: |
           # Retrieve package from URL, verify correct name/version/checksum
-          exec 3> >(tee /dev/stderr >> "$GITHUB_OUTPUT")
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}" "${DEB_URL:?}"
 
@@ -194,7 +190,7 @@ jobs:
 
           sha256sum --check <<< "$DEB_SHA256  $dist_deb"
 
-          cat >&3 << EOF
+          cat >(tee -a "$GITHUB_OUTPUT" >&2) << EOF
           status=pass
           EOF
 
