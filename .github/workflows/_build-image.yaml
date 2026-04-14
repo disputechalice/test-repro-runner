@@ -1,16 +1,19 @@
-name: build builder from definition
+name: Build image from definition
 
 on:
   workflow_call:
     inputs:
-      def-repo:
+      git-repo:
         required: true
         type: string
-      def-ref:
+      git-ref:
         required: false
         type: string
         default: main
       def-name:
+        required: true
+        type: string
+      image-name:
         required: true
         type: string
       image-tag:
@@ -23,12 +26,12 @@ defaults:
     shell: bash
 
 env:
-  GIT_URL: ${{ inputs.def-repo }}
-  GIT_REF: ${{ inputs.def-ref }}
+  GIT_URL: ${{ inputs.git-repo }}
+  GIT_REF: ${{ inputs.git-ref }}
   BUILD_SCRIPT: def/${{ inputs.def-name }}/build
   BOOTSTRAP_YAML: def/${{ inputs.def-name }}/bootstrap.yaml
-  IMAGE: ghcr.io/${{ github.repository_owner }}/builder-${{ inputs.def-name }}
-  IMAGE_NAME: ${{ github.repository_owner }}-builder-${{ inputs.def-name }}
+  IMAGE: ghcr.io/${{ github.repository_owner }}/${{ inputs.image-name }}
+  IMAGE_NAME: ${{ github.repository_owner }}-${{ inputs.image-name }}
   IMAGE_TAG: ${{ inputs.image-tag }}
 
 jobs:
@@ -61,10 +64,10 @@ jobs:
         env:
           SOURCE_DATE_EPOCH: ${{ steps.def.outputs.git-commit-epoch }}
           IMAGE_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          IMAGE_SOURCE: ${{ inputs.def-repo }}
+          IMAGE_SOURCE: ${{ inputs.git-repo }}
           IMAGE_REVISION: ${{ steps.def.outputs.git-commit }}
           IMAGE_AUTHORS: ${{ github.repository_owner }}
-          IMAGE_DESCRIPTION: Builder-${{ inputs.def-name }}
+          IMAGE_DESCRIPTION: ${{ inputs.def-name }}
 
         run: |
           export SOURCE_DATE_EPOCH IMAGE IMAGE_{NAME,TAG,URL,SOURCE,REVISION,AUTHORS,DESCRIPTION}

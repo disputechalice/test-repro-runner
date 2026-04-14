@@ -1,4 +1,4 @@
-name: repro-checks
+name: Check plain package
 
 on:
   workflow_call:

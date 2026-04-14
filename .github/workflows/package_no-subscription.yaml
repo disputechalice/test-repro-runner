@@ -1,4 +1,4 @@
-name: Check no-subscription
+name: Check package: no-subscription
 on:
   workflow_dispatch:
 
