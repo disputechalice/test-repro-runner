@@ -53,7 +53,6 @@ jobs:
         run: |
           # Identify .buildmeta file in the source, infer target package name/version
           # Ensure single file only per package (optional input, otherwise single package source)
-          exec 3> >(tee -a "$GITHUB_OUTPUT" >&2)
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${SOURCE:?}"
 
@@ -67,7 +66,7 @@ jobs:
           buildmeta_filename=${buildmeta_path##*/}
           buildmeta_barename="${buildmeta_filename%%.buildmeta}"
 
-          cat >&3 << EOF
+          tee -a "$GITHUB_OUTPUT" >&2 << EOF
           path=$buildmeta_path
           package=${buildmeta_barename%%_*}
           version=${buildmeta_barename#*_}
@@ -89,7 +88,6 @@ jobs:
           BUILDMETA: ${{ steps.buildmeta-var.outputs.json }}
         run: |
           # Split build-environment and provenance data as JSON
-          exec 3> >(tee -a "$GITHUB_OUTPUT" >&2)
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${GIT_COMMIT:?}" "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${BUILDMETA:?}"
 
@@ -113,7 +111,7 @@ jobs:
               deb_url
           }' <<< "$BUILDMETA")
 
-          cat >&3 << EOF
+          tee -a "$GITHUB_OUTPUT" >&2 << EOF
           env-json=$env_json
           prov-json=$prov_json
           EOF
@@ -146,10 +144,9 @@ jobs:
         name: Check self-built repro package
         run: |
           # Build package from source, verify correct name/version/checksum
-          exec 3> >(tee -a "$GITHUB_OUTPUT" >&2)
           trap 'echo >&2 E$? L$LINENO' ERR
-          : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}"
-          : "${SOURCE_DATE_EPOCH:?}" "${DPKG_DEB_COMPRESSOR_TYPE:?}"
+          : "${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?}"
+          : "${SOURCE_DATE_EPOCH:?} ${DPKG_DEB_COMPRESSOR_TYPE:?}"
 
           built_deb=$(mktemp /tmp/repro.XXXXXX.deb)
           export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
@@ -160,7 +157,7 @@ jobs:
 
           sha256sum --check <<< "$DEB_SHA256  $built_deb"
 
-          cat >&3 << EOF
+          tee -a "$GITHUB_OUTPUT" >&2 << EOF
           status=pass
           EOF
 
@@ -182,9 +179,8 @@ jobs:
         name: Check retrieved dist package
         run: |
           # Retrieve package from URL, verify correct name/version/checksum
-          exec 3> >(tee -a "$GITHUB_OUTPUT" >&2)
           trap 'echo >&2 E$? L$LINENO' ERR
-          : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_SHA256:?}" "${DEB_URL:?}"
+          : "${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?} ${DEB_URL:?}"
 
           dist_deb=$(mktemp /tmp/dist.XXXXXX.deb)
           wget --no-verbose -O "$dist_deb" "$DEB_URL"
@@ -194,7 +190,7 @@ jobs:
 
           sha256sum --check <<< "$DEB_SHA256  $dist_deb"
 
-          cat >&3 << EOF
+          tee -a "$GITHUB_OUTPUT" >&2 << EOF
           status=pass
           EOF
 
@@ -216,12 +212,13 @@ jobs:
       - name: Report summary
         run: |
           # Build markdown summary, fail overall on any single fail
-          exec 4> >(tee -a "$GITHUB_STEP_SUMMARY" >&2)
           trap 'echo >&2 E$? L$LINENO' ERR
-          : "${GIT_URL:?}" "${GIT_COMMIT:?}"           
-          : "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${DEB_URL:?}" "${DEB_SHA256:?}"
+          : "${GIT_URL:?} ${GIT_COMMIT:?}"           
+          : "${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_URL:?} ${DEB_SHA256:?}"
 
-          tee -a "report.md" >&2 << EOF
+          REPORT="$(mktemp /tmp/report.XXXXXX.md)"
+
+          cat >> "$REPORT" << EOF
 
           # Report
           As of: **$(date --rfc-3339=seconds --utc)**
@@ -231,7 +228,7 @@ jobs:
           | Version | *$DEB_VERSION* |
           EOF
 
-          tee -a "report.md" >&2 << EOF
+          cat >> "$REPORT" << EOF
 
           ## Reproducible build
 
@@ -243,7 +240,7 @@ jobs:
 
           EOF
 
-          tee -a "report.md" >&2 << EOF
+          cat >> "$REPORT" << EOF
 
           ## Distributed package
 
@@ -253,7 +250,7 @@ jobs:
           | Package URL      | [$DEB_URL]($DEB_URL) |
           EOF
 
-          cat report.md >> $GITHUB_STEP_SUMMARY
+          tee -a $GITHUB_STEP_SUMMARY >&2 < "$REPORT"
 
           [[ "$STATUS_REPRO" == "pass" ]]
           [[ "$STATUS_DIST" == "pass" ]]
