@@ -14,4 +14,4 @@ jobs:
       git-ref: main
       def-name: plain
       image-name: builder-plain
-      image-tags: '["latest", "run-${{ github.run_id }}"]'
+      image-tags: "latest run-${{ github.run_id }}"

@@ -17,9 +17,10 @@ on:
         required: true
         type: string
       image-tags:
+        description: Space-separated list of tags
         required: false
         type: string
-        default: '["latest"]'
+        default: "latest"
 
 defaults:
   run:
@@ -86,7 +87,8 @@ jobs:
             -u "${{ github.actor }}" \
             --password-stdin <<< "${{ secrets.GITHUB_TOKEN }}"
 
-          for tag in $(echo $IMAGE_TAGS | jq -r '.[]'); do
+          IFS=' ' read -ra tags <<< "$IMAGE_TAGS"
+          for tag in "${tags[@]}"; do
             buildah tag "$IMAGE_NAME" "$IMAGE_REPO:$tag"
             buildah push --digestfile digest "$IMAGE_REPO:$tag"
             echo "Pushed with tag: $tag"
