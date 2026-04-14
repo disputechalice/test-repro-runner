@@ -3,7 +3,7 @@ name: "[Build image]"
 on:
   workflow_call:
     inputs:
-      git-repo:
+      git-url:
         required: true
         type: string
       git-ref:
@@ -26,12 +26,12 @@ defaults:
     shell: bash
 
 env:
-  GIT_URL: ${{ inputs.git-repo }}
+  GIT_URL: ${{ inputs.git-url }}
   GIT_REF: ${{ inputs.git-ref }}
   BUILD_SCRIPT: def/${{ inputs.def-name }}/build
   BOOTSTRAP_YAML: def/${{ inputs.def-name }}/bootstrap.yaml
-  IMAGE: ghcr.io/${{ github.repository_owner }}/${{ inputs.image-name }}
-  IMAGE_NAME: ${{ github.repository_owner }}-${{ inputs.image-name }}
+  CR_URL: ghcr.io/${{ github.repository_owner }}
+  IMAGE_NAME: ${{ inputs.image-name }}
   IMAGE_TAG: ${{ inputs.image-tag }}
 
 jobs:
@@ -63,14 +63,11 @@ jobs:
         name: Build image
         env:
           SOURCE_DATE_EPOCH: ${{ steps.def.outputs.git-commit-epoch }}
-          IMAGE_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          IMAGE_SOURCE: ${{ inputs.git-repo }}
+          IMAGE_SOURCE: ${{ inputs.git-url }}
           IMAGE_REVISION: ${{ steps.def.outputs.git-commit }}
-          IMAGE_AUTHORS: ${{ github.repository_owner }}
-          IMAGE_DESCRIPTION: ${{ inputs.def-name }}
 
         run: |
-          export SOURCE_DATE_EPOCH IMAGE_{NAME,TAG,URL,SOURCE,REVISION,AUTHORS,DESCRIPTION}
+          export SOURCE_DATE_EPOCH IMAGE_{NAME,SOURCE,REVISION}
 
           buildah unshare "$BUILD_SCRIPT"
 
@@ -94,37 +91,41 @@ jobs:
             -u "${{ github.actor }}" \
             --password-stdin <<< "${{ secrets.GITHUB_TOKEN }}"
 
-          buildah tag "$IMAGE_NAME" "$IMAGE:$IMAGE_TAG"
+          push_name="$CR_URL/$IMAGE_NAME"
+
+          buildah tag "$IMAGE_NAME" "$push_name:$IMAGE_TAG"
 
           buildah push \
             --digestfile digestfile \
-            "$IMAGE:$IMAGE_TAG"
+            "$push_name:$IMAGE_TAG"
 
-          tagged="$IMAGE:r-$RUN_ID"
+          tagged="$push_name:r-$RUN_ID"
           buildah tag "$IMAGE_NAME" "$tagged"
           buildah push "$tagged"
 
           cat >> $GITHUB_OUTPUT << EOF
+          image-pushed-name=$push_name
           image-digest=$(cat digestfile)
           EOF
 
       - name: Summarize
         env:
           ROOTFS_DIFFID0: ${{ fromJSON(steps.build.outputs.rootfs-diffids)[0] }}
-          IMAGE_DIGEST: ${{ steps.push.outputs.image-digest }}
+          IMAGE_PUSHED_NAME: ${{ steps.push.outputs.image-pushed-name }}
+          IMAGE_PUSHED_DIGEST: ${{ steps.push.outputs.image-digest }}
           GIT_COMMIT: ${{ steps.def.outputs.git-commit }}
           TAR_SHA256: ${{ steps.def.outputs.tar-sha256 }}
         run: |
           # Build markdown summary
           trap 'echo >&2 E$? L$LINENO' ERR
-          : "${IMAGE_DIGEST:?}"
+          : "${IMAGE_PUSHED_DIGEST:?}"
 
           tee -a "report.md" >&2 << EOF
-          $IMAGE : $IMAGE_TAG
+          $IMAGE_PUSHED_NAME : $IMAGE_TAG
 
           rootfs diffid 0: ${ROOTFS_DIFFID0#*:}
 
-          pushed image: $IMAGE_DIGEST
+          pushed image: $IMAGE_PUSHED_DIGEST
 
           \`\`\`
           $(yq '.mmdebstrap.suite' "$BOOTSTRAP_YAML")
