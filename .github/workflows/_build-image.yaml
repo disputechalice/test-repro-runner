@@ -28,8 +28,8 @@ defaults:
 env:
   GIT_URL: ${{ inputs.git-url }}
   GIT_REF: ${{ inputs.git-ref }}
-  CR_URL: ghcr.io/${{ github.repository_owner }}
   IMAGE_NAME: ${{ inputs.image-name }}
+  IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/${{ inputs.image-name }}
   IMAGE_TAGS: ${{ inputs.image-tags }}
 
 jobs:
@@ -79,14 +79,12 @@ jobs:
 
       - id: push
         name: Push to Registry
-        env:
-          RUN_ID: ${{ github.run_id }}
         run: |
+          : "${IMAGE_NAME:?} ${IMAGE_REPO:?} ${IMAGE_TAGS:?}"
+
           buildah login ghcr.io \
             -u "${{ github.actor }}" \
             --password-stdin <<< "${{ secrets.GITHUB_TOKEN }}"
-
-          IMAGE_REPO="$CR_URL/$IMAGE_NAME"
 
           for tag in $(echo $IMAGE_TAGS | jq -r '.[]'); do
             buildah tag "$IMAGE_NAME" "$IMAGE_REPO:$tag"
