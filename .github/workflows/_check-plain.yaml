@@ -39,14 +39,22 @@ jobs:
 
     steps:
       - id: source
-        name: Normalize source artifact
+        name: Checkout source with applied permsrc
         uses: disputechalice/test-gh-actions/tree-from-gitref@main
         with:
           git-url: ${{ env.GIT_URL }}
           git-ref: ${{ env.GIT_REF }}
           target: ./${{ env.SOURCE }}
           permsrc: true
-          artifact: ${{ env.SOURCE }}
+
+      - id: archive
+        name: Create canonical tarball artifact
+        uses: disputechalice/test-gh-actions/canonical-archive@main
+        with:
+          path: ./${{ env.SOURCE }}
+          name: ${{ env.SOURCE }}
+          epoch: ${{ steps.source.outputs.git-commit-epoch }}
+          artifact: true
 
       - id: buildmeta-acq
         name: Acquire buildmeta file
