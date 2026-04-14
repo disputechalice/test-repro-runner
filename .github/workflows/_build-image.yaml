@@ -101,7 +101,7 @@ jobs:
 
       - name: Summarize
         env:
-          ROOTFS_DIFFID0: ${{ fromJSON(steps.build.outputs.rootfs-diffids)[0] }}
+          ROOTFS_DIFFIDS: ${{ steps.build.outputs.rootfs-diffids }}
           IMAGE_REPO: ${{ steps.push.outputs.image-repo }}
           IMAGE_DIGEST: ${{ steps.push.outputs.image-digest }}
           GIT_COMMIT: ${{ steps.def.outputs.git-commit }}
@@ -118,7 +118,8 @@ jobs:
           $IMAGE_REPO
           $IMAGE_TAGS
 
-          rootfs diffid 0: ${ROOTFS_DIFFID0#*:}
+          ## RootFS Diff IDs:
+          $(echo "$ROOTFS_DIFFIDS" | jq -r '.[]')
 
           pushed image: $IMAGE_DIGEST
 
