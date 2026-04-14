@@ -28,8 +28,6 @@ defaults:
 env:
   GIT_URL: ${{ inputs.git-url }}
   GIT_REF: ${{ inputs.git-ref }}
-  BUILD_SCRIPT: def/${{ inputs.def-name }}/build
-  BOOTSTRAP_YAML: def/${{ inputs.def-name }}/bootstrap.yaml
   CR_URL: ghcr.io/${{ github.repository_owner }}
   IMAGE_NAME: ${{ inputs.image-name }}
   IMAGE_TAG: ${{ inputs.image-tag }}
@@ -57,7 +55,6 @@ jobs:
         with:
           git-url: ${{ env.GIT_URL }}
           git-ref: ${{ env.GIT_REF }}
-          target: def
 
       - id: build
         name: Build image
@@ -65,7 +62,7 @@ jobs:
           SOURCE_DATE_EPOCH: ${{ steps.def.outputs.git-commit-epoch }}
           IMAGE_SOURCE: ${{ inputs.git-url }}
           IMAGE_REVISION: ${{ steps.def.outputs.git-commit }}
-
+          BUILD_SCRIPT: ${{ steps.def.outputs.path }}/${{ inputs.def-name }}/build
         run: |
           export SOURCE_DATE_EPOCH IMAGE_{NAME,SOURCE,REVISION}
 
@@ -115,6 +112,7 @@ jobs:
           IMAGE_PUSHED_DIGEST: ${{ steps.push.outputs.image-digest }}
           GIT_COMMIT: ${{ steps.def.outputs.git-commit }}
           TAR_SHA256: ${{ steps.def.outputs.tar-sha256 }}
+          BOOTSTRAP_YAML: ${{ steps.def.outputs.path }}/${{ inputs.def-name }}/bootstrap.yaml
         run: |
           # Build markdown summary
           trap 'echo >&2 E$? L$LINENO' ERR
