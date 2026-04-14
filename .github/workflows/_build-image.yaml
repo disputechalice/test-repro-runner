@@ -74,7 +74,7 @@ jobs:
 
           buildah unshare "$BUILD_SCRIPT"
 
-          cat def/manifest || ls -la
+          cat manifest || ls -la
 
           cat >> $GITHUB_OUTPUT << EOF
           rootfs-diffids=$(buildah inspect "$IMAGE_NAME" | jq -c '.OCIv1.rootfs.diff_ids')
