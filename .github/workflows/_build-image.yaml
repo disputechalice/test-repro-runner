@@ -105,7 +105,6 @@ jobs:
           IMAGE_REPO: ${{ steps.push.outputs.image-repo }}
           IMAGE_DIGEST: ${{ steps.push.outputs.image-digest }}
           GIT_COMMIT: ${{ steps.def.outputs.git-commit }}
-          TAR_SHA256: ${{ steps.def.outputs.tar-sha256 }}
           BS_YAML: ${{ steps.def.outputs.path }}/${{ inputs.def-name }}/bootstrap.yaml
         run: |
           # Build markdown summary
@@ -116,7 +115,8 @@ jobs:
 
           cat >> "$REPORT" << EOF
 
-          $IMAGE_REPO : $IMAGE_TAG
+          $IMAGE_REPO
+          $IMAGE_TAGS
 
           rootfs diffid 0: ${ROOTFS_DIFFID0#*:}
 
@@ -128,9 +128,10 @@ jobs:
           $(yq '.mmdebstrap.mirrors' "$BS_YAML")
           \`\`\`
 
-          Image def:
-          - from commit $GIT_COMMIT
-          - tarball SHA256: $TAR_SHA256
+          Image def from:
+          - $GIT_URL
+          - $GIT_REF          
+          - $GIT_COMMIT
 
           Manifest:
 
