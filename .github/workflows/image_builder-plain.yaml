@@ -1,4 +1,4 @@
-name: Build builder image - plain
+name: Build image - builder-plain
 
 on:
   workflow_dispatch:
