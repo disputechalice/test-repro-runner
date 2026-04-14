@@ -73,7 +73,7 @@ jobs:
 
           cat "$IMAGE_NAME/manifest" || ls -laR
 
-          cat >(tee -a "$GITHUB_OUTPUT" >&2) << EOF
+          cat >(tee /dev/stderr >> "$GITHUB_OUTPUT") << EOF
           rootfs-diffids=$(buildah inspect "$IMAGE_NAME" | jq -c '.OCIv1.rootfs.diff_ids')
           EOF
 
