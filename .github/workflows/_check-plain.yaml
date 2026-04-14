@@ -49,12 +49,12 @@ jobs:
 
       - id: archive
         name: Create canonical tarball artifact
-        uses: disputechalice/test-gh-actions/canonical-archive@main
+        uses: disputechalice/test-gh-actions/tree-to-artifact-tar@main
         with:
           path: ./${{ env.SOURCE }}
           name: ${{ env.SOURCE }}
           epoch: ${{ steps.source.outputs.git-commit-epoch }}
-          artifact: true
+          upload: true
 
       - id: buildmeta-acq
         name: Acquire buildmeta file
@@ -142,7 +142,7 @@ jobs:
 
     steps:
       - name: Get package payload
-        uses: disputechalice/test-gh-actions/tree-from-artifact@main
+        uses: disputechalice/test-gh-actions/tree-from-artifact-tar@main
         with:
           artifact: ${{ env.SOURCE }}
           target: ./${{ env.DEB_PACKAGE }}
