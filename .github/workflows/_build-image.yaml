@@ -90,13 +90,13 @@ jobs:
 
           for tag in $(echo $IMAGE_TAGS | jq -r '.[]'); do
             buildah tag "$IMAGE_NAME" "$IMAGE_REPO:$tag"
-            buildah push "$IMAGE_REPO:$tag" --digestfile digestfile
+            buildah push --digestfile digest "$IMAGE_REPO:$tag"
             echo "Pushed with tag: $tag"
           done
 
           tee -a "$GITHUB_OUTPUT" >&2 << EOF
           image-repo=$IMAGE_REPO
-          image-digest=$(cat digestfile)
+          image-digest=$(cat digest)
           EOF
 
       - name: Summarize
