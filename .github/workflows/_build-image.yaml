@@ -86,28 +86,28 @@ jobs:
             -u "${{ github.actor }}" \
             --password-stdin <<< "${{ secrets.GITHUB_TOKEN }}"
 
-          push_name="$CR_URL/$IMAGE_NAME"
+          IMAGE_REPO="$CR_URL/$IMAGE_NAME"
 
-          buildah tag "$IMAGE_NAME" "$push_name:$IMAGE_TAG"
+          buildah tag "$IMAGE_NAME" "$IMAGE_REPO:$IMAGE_TAG"
 
           buildah push \
             --digestfile digestfile \
-            "$push_name:$IMAGE_TAG"
+            "$IMAGE_REPO:$IMAGE_TAG"
 
-          tagged="$push_name:r-$RUN_ID"
+          tagged="$IMAGE_REPO:r-$RUN_ID"
           buildah tag "$IMAGE_NAME" "$tagged"
           buildah push "$tagged"
 
           tee -a "$GITHUB_OUTPUT" >&2 << EOF
-          image-pushed-name=$push_name
+          image-repo=$IMAGE_REPO
           image-digest=$(cat digestfile)
           EOF
 
       - name: Summarize
         env:
           ROOTFS_DIFFID0: ${{ fromJSON(steps.build.outputs.rootfs-diffids)[0] }}
-          IMAGE_PUSHED_NAME: ${{ steps.push.outputs.image-pushed-name }}
-          IMAGE_PUSHED_DIGEST: ${{ steps.push.outputs.image-digest }}
+          IMAGE_REPO: ${{ steps.push.outputs.image-repo }}
+          IMAGE_DIGEST: ${{ steps.push.outputs.image-digest }}
           GIT_COMMIT: ${{ steps.def.outputs.git-commit }}
           TAR_SHA256: ${{ steps.def.outputs.tar-sha256 }}
           BS_YAML: ${{ steps.def.outputs.path }}/${{ inputs.def-name }}/bootstrap.yaml
@@ -120,11 +120,11 @@ jobs:
 
           cat >> "$REPORT" << EOF
 
-          $IMAGE_PUSHED_NAME : $IMAGE_TAG
+          $IMAGE_REPO : $IMAGE_TAG
 
           rootfs diffid 0: ${ROOTFS_DIFFID0#*:}
 
-          pushed image: $IMAGE_PUSHED_DIGEST
+          pushed image: $IMAGE_DIGEST
 
           \`\`\`
           $(yq '.mmdebstrap.suite' "$BS_YAML")
