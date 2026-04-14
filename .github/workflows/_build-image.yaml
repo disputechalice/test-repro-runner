@@ -70,11 +70,11 @@ jobs:
           IMAGE_DESCRIPTION: ${{ inputs.def-name }}
 
         run: |
-          export SOURCE_DATE_EPOCH IMAGE IMAGE_{NAME,TAG,URL,SOURCE,REVISION,AUTHORS,DESCRIPTION}
+          export SOURCE_DATE_EPOCH IMAGE_{NAME,TAG,URL,SOURCE,REVISION,AUTHORS,DESCRIPTION}
 
           buildah unshare "$BUILD_SCRIPT"
 
-          cat manifest || ls -la
+          cat "$IMAGE_NAME/manifest" || ls -laR
 
           cat >> $GITHUB_OUTPUT << EOF
           rootfs-diffids=$(buildah inspect "$IMAGE_NAME" | jq -c '.OCIv1.rootfs.diff_ids')
@@ -129,7 +129,7 @@ jobs:
           \`\`\`
           $(yq '.mmdebstrap.suite' "$BOOTSTRAP_YAML")
           $(yq '.mmdebstrap.variant' "$BOOTSTRAP_YAML")
-          $(yq '.mmdebstrap.mirrors' "$BOOTSTRAP_YAML")          
+          $(yq '.mmdebstrap.mirrors' "$BOOTSTRAP_YAML")
           \`\`\`
 
           Image def:
@@ -138,4 +138,3 @@ jobs:
           EOF
 
           cat report.md >> $GITHUB_STEP_SUMMARY
-          
