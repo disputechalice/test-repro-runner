@@ -44,27 +44,28 @@ jobs:
         with:
           git-url: ${{ env.GIT_URL }}
           git-ref: ${{ env.GIT_REF }}
-          target: ./${{ env.SOURCE }}
           permsrc: true
 
       - id: archive
         name: Create canonical tarball artifact
         uses: disputechalice/test-gh-actions/tree-to-artifact-tar@main
         with:
-          path: ./${{ env.SOURCE }}
+          path: ${{ steps.source.outputs.path }}
           name: ${{ env.SOURCE }}
           epoch: ${{ steps.source.outputs.git-commit-epoch }}
           upload: true
 
       - id: buildmeta-acq
         name: Acquire buildmeta file
+        env:
+          TARGET: ${{ steps.source.outputs.path }}
         run: |
           # Identify .buildmeta file in the source, infer target package name/version
           # Ensure single file only per package (optional input, otherwise single package source)
           trap 'echo >&2 E$? L$LINENO' ERR
-          : "${SOURCE:?}"
+          : "${TARGET:?}"
 
-          prefix="$SOURCE/${PACKAGE:+$PACKAGE}"
+          prefix="$TARGET/${PACKAGE:+$PACKAGE}"
           found=("$prefix"*.buildmeta)        
           ((${#found[@]} == 1))
 
@@ -130,7 +131,7 @@ jobs:
     container: ghcr.io/disputechalice/builder-plain:latest
 
     env:
-      SOURCE: ${{ inputs.source-name }}    
+      SOURCE: ${{ inputs.source-name }}
       DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov-json).deb_package }}
       DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov-json).deb_version }}
       DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov-json).deb_sha256 }}
