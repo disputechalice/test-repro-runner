@@ -40,7 +40,7 @@ jobs:
     steps:
       - id: source
         name: Checkout source with applied permsrc
-        uses: disputechalice/test-gh-actions/tree-from-gitref@main
+        uses: disputechalice/test-gh-actions/tree-from-git-ref@main
         with:
           git-url: ${{ env.GIT_URL }}
           git-ref: ${{ env.GIT_REF }}
