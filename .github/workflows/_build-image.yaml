@@ -62,13 +62,11 @@ jobs:
           SOURCE_DATE_EPOCH: ${{ steps.def.outputs.git-commit-epoch }}
           IMAGE_SOURCE: ${{ inputs.git-url }}
           IMAGE_REVISION: ${{ steps.def.outputs.git-commit }}
-          BUILD_SCRIPT: ${{ steps.def.outputs.path }}/${{ inputs.def-name }}/build
+          DEF_DIR: ${{ steps.def.outputs.path }}/${{ inputs.def-name }}
         run: |
           export SOURCE_DATE_EPOCH IMAGE_{NAME,SOURCE,REVISION}
 
-          buildah unshare "$BUILD_SCRIPT"
-
-          cat "$IMAGE_NAME/manifest" || ls -laR
+          buildah unshare "$DEF_DIR/build"
 
           tee -a "$GITHUB_OUTPUT" >&2 << EOF
           rootfs-diffids=$(buildah inspect "$IMAGE_NAME" | jq -c '.OCIv1.rootfs.diff_ids')
@@ -112,13 +110,16 @@ jobs:
           IMAGE_PUSHED_DIGEST: ${{ steps.push.outputs.image-digest }}
           GIT_COMMIT: ${{ steps.def.outputs.git-commit }}
           TAR_SHA256: ${{ steps.def.outputs.tar-sha256 }}
-          BOOTSTRAP_YAML: ${{ steps.def.outputs.path }}/${{ inputs.def-name }}/bootstrap.yaml
+          DEF_DIR: ${{ steps.def.outputs.path }}/${{ inputs.def-name }}
         run: |
           # Build markdown summary
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${IMAGE_PUSHED_DIGEST:?}"
 
           REPORT="$(mktemp /tmp/report.XXXXXX.md)"
+
+          bs_yaml="$DEF_DIR/bootstrap.yaml"
+
 
           cat >> "$REPORT" << EOF
 
@@ -129,14 +130,19 @@ jobs:
           pushed image: $IMAGE_PUSHED_DIGEST
 
           \`\`\`
-          $(yq '.mmdebstrap.suite' "$BOOTSTRAP_YAML")
-          $(yq '.mmdebstrap.variant' "$BOOTSTRAP_YAML")
-          $(yq '.mmdebstrap.mirrors' "$BOOTSTRAP_YAML")
+          $(yq '.mmdebstrap.suite' "$bs_yaml")
+          $(yq '.mmdebstrap.variant' "$bs_yaml")
+          $(yq '.mmdebstrap.mirrors' "$bs_yaml")
           \`\`\`
 
           Image def:
           - from commit $GIT_COMMIT
           - tarball SHA256: $TAR_SHA256
+
+          Manifest:
+
           EOF
+
+          cat "$DEF_DIR/manifest" >> "$REPORT" ||:
 
           tee -a "$GITHUB_STEP_SUMMARY" >&2 < "$REPORT"
