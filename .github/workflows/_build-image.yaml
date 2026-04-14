@@ -67,13 +67,15 @@ jobs:
           IMAGE_REVISION: ${{ steps.def.outputs.git-commit }}
 
         run: |
+          exec 3> >(tee -a "$GITHUB_OUTPUT" >&2)
+
           export SOURCE_DATE_EPOCH IMAGE_{NAME,SOURCE,REVISION}
 
           buildah unshare "$BUILD_SCRIPT"
 
           cat "$IMAGE_NAME/manifest" || ls -laR
 
-          cat >(tee /dev/stderr >> "$GITHUB_OUTPUT") << EOF
+          cat >&3 << EOF
           rootfs-diffids=$(buildah inspect "$IMAGE_NAME" | jq -c '.OCIv1.rootfs.diff_ids')
           EOF
 
@@ -87,6 +89,8 @@ jobs:
         env:
           RUN_ID: ${{ github.run_id }}
         run: |
+          exec 3> >(tee -a "$GITHUB_OUTPUT" >&2)
+
           buildah login ghcr.io \
             -u "${{ github.actor }}" \
             --password-stdin <<< "${{ secrets.GITHUB_TOKEN }}"
@@ -103,7 +107,7 @@ jobs:
           buildah tag "$IMAGE_NAME" "$tagged"
           buildah push "$tagged"
 
-          cat >(tee -a "$GITHUB_OUTPUT" >&2) << EOF
+          cat >&3 << EOF
           image-pushed-name=$push_name
           image-digest=$(cat digestfile)
           EOF
@@ -116,6 +120,8 @@ jobs:
           GIT_COMMIT: ${{ steps.def.outputs.git-commit }}
           TAR_SHA256: ${{ steps.def.outputs.tar-sha256 }}
         run: |
+          exec 4> >(tee -a "$GITHUB_STEP_SUMMARY" >&2)
+          
           # Build markdown summary
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${IMAGE_PUSHED_DIGEST:?}"
@@ -138,4 +144,4 @@ jobs:
           - tarball SHA256: $TAR_SHA256
           EOF
 
-          cat report.md >> $GITHUB_STEP_SUMMARY
+          cat report.md >&4
