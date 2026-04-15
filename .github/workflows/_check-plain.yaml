@@ -35,7 +35,7 @@ jobs:
 
     steps:
       - id: source
-        name: Checkout source with applied permsrc
+        name: Obtain source archive, extract to ingest metadata
         uses: disputechalice/test-gh-actions/git-archive@main
         with:
           git-repo: ${{ env.GIT_REPO }}
@@ -48,7 +48,7 @@ jobs:
           TARGET: ${{ steps.source.outputs.path }}
         run: |
           # Identify .buildmeta file in the source, infer target package name/version
-          # Ensure single file only per package (optional input, otherwise single package source)
+          # Ensure single file only (per package, if specified)
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${TARGET:?}"
 
