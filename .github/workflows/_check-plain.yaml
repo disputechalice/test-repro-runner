@@ -137,7 +137,7 @@ jobs:
       - id: check
         name: Check self-built repro package
         env:
-          SOURCE_DIR: ${{ steps.payload.outputs.target-path }}
+          SOURCE_DIR: ${{ steps.payload.outputs.path }}
         run: |
           # Build package from source, verify correct name/version/checksum
           trap 'echo >&2 E$? L$LINENO' ERR
