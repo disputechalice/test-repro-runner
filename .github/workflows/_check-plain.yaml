@@ -34,6 +34,7 @@ jobs:
       PACKAGE: ${{ inputs.package-name }}
 
     outputs:
+      source-artifact-name: ${{ steps.source.outputs.artifact-name }}
       env-json: ${{ steps.context.outputs.env-json }}
       prov-json: ${{ steps.context.outputs.prov-json }}      
 
@@ -44,21 +45,11 @@ jobs:
         with:
           git-url: ${{ env.GIT_URL }}
           git-ref: ${{ env.GIT_REF }}
-          permsrc: true
-
-      - id: archive
-        name: Create canonical tarball artifact
-        uses: disputechalice/test-gh-actions/tree-to-artifact-tar@main
-        with:
-          path: ${{ steps.source.outputs.path }}
-          name: ${{ env.SOURCE }}
-          epoch: ${{ steps.source.outputs.git-commit-epoch }}
-          upload: true
 
       - id: buildmeta-acq
         name: Acquire buildmeta file
         env:
-          TARGET: ${{ steps.source.outputs.path }}
+          TARGET: ${{ steps.source.outputs.target-path }}
         run: |
           # Identify .buildmeta file in the source, infer target package name/version
           # Ensure single file only per package (optional input, otherwise single package source)
@@ -131,7 +122,6 @@ jobs:
     container: ghcr.io/disputechalice/builder-plain:latest
 
     env:
-      SOURCE: ${{ inputs.source-name }}
       DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov-json).deb_package }}
       DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov-json).deb_version }}
       DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov-json).deb_sha256 }}
@@ -145,7 +135,7 @@ jobs:
       - name: Get package payload
         uses: disputechalice/test-gh-actions/tree-from-artifact-tar@main
         with:
-          artifact: ${{ env.SOURCE }}
+          artifact: ${{ needs.prep.outputs.source-artifact-name }}
           target: ./${{ env.DEB_PACKAGE }}
           prefix: ./${{ env.DEB_PACKAGE }}
 
