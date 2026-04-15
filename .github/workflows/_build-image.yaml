@@ -57,7 +57,7 @@ jobs:
 
       - id: def
         name: Fetch definitions tree
-        uses: disputechalice/test-gh-actions/tree-from-git-ref@main
+        uses: disputechalice/test-gh-actions/git-archive@main
         with:
           git-url: ${{ env.GIT_URL }}
           git-ref: ${{ env.GIT_REF }}
@@ -95,7 +95,7 @@ jobs:
           [[ $ID == debian ]]
 
       - name: Artifact
-        uses: disputechalice/test-gh-actions/tree-to-artifact-tar@main
+        uses: disputechalice/test-gh-actions/archive@main
         with:
           path: ${{ env.IMAGE_NAME }}
           name: ${{ env.IMAGE_NAME }}
