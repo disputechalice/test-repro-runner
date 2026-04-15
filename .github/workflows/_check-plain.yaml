@@ -136,8 +136,8 @@ jobs:
         uses: disputechalice/test-gh-actions/tree-from-artifact-tar@main
         with:
           artifact: ${{ needs.prep.outputs.source-artifact-name }}
-          target: ./${{ env.DEB_PACKAGE }}
-          prefix: ./${{ env.DEB_PACKAGE }}
+          target: ${{ env.DEB_PACKAGE }}
+          prefix: ${{ env.DEB_PACKAGE }}
 
       - id: check
         name: Check self-built repro package
