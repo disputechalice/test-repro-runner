@@ -29,7 +29,7 @@ jobs:
       PACKAGE: ${{ inputs.package-name }}
 
     outputs:
-      source-artifact-name: ${{ steps.source.outputs.artifact-name }}
+      source-artifact-name: ${{ steps.source.outputs.artifact }}
       env-json: ${{ steps.context.outputs.env-json }}
       prov-json: ${{ steps.context.outputs.prov-json }}      
 
@@ -40,11 +40,12 @@ jobs:
         with:
           git-url: ${{ env.GIT_URL }}
           git-ref: ${{ env.GIT_REF }}
+          extract: true
 
       - id: buildmeta-acq
         name: Acquire buildmeta file
         env:
-          TARGET: ${{ steps.source.outputs.target-path }}
+          TARGET: ${{ steps.source.outputs.path }}
         run: |
           # Identify .buildmeta file in the source, infer target package name/version
           # Ensure single file only per package (optional input, otherwise single package source)

@@ -59,8 +59,9 @@ jobs:
         name: Fetch definitions tree
         uses: disputechalice/test-gh-actions/git-archive@main
         with:
-          git-url: ${{ env.GIT_URL }}
+          git-repo: ${{ env.GIT_URL }}
           git-ref: ${{ env.GIT_REF }}
+          extract: true
 
       - id: build
         name: Build image
@@ -68,7 +69,7 @@ jobs:
           SOURCE_DATE_EPOCH: ${{ steps.def.outputs.git-commit-epoch }}
           IMAGE_SOURCE: ${{ inputs.git-url }}
           IMAGE_REVISION: ${{ steps.def.outputs.git-commit }}
-          BUILD: ${{ steps.def.outputs.target-path }}/${{ inputs.def-name }}/build
+          BUILD: ${{ steps.def.outputs.path }}/${{ inputs.def-name }}/build
         run: |
           export SOURCE_DATE_EPOCH IMAGE_{NAME,SOURCE,REVISION}
 
@@ -80,7 +81,7 @@ jobs:
 
       - name: Check image
         env:
-          BS_YAML: ${{ steps.def.outputs.target-path }}/${{ inputs.def-name }}/bootstrap.yaml
+          BS_YAML: ${{ steps.def.outputs.path }}/${{ inputs.def-name }}/bootstrap.yaml
         run: |
           cat >&2 << EOF
           $(yq '.mmdebstrap.suite' "$BS_YAML")
