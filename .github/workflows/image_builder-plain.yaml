@@ -10,7 +10,7 @@ jobs:
       packages: write
     uses: ./.github/workflows/_build-image.yaml
     with:
-      git-url: https://github.com/disputechalice/builder.git
+      git-repo: https://github.com/disputechalice/builder.git
       git-ref: main
       def-name: plain
       image-name: builder-plain
