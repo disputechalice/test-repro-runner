@@ -97,7 +97,7 @@ jobs:
       - name: Artifact
         uses: disputechalice/test-gh-actions/tree-to-artifact-tar@main
         with:
-          path: ${{ steps.def.outputs.path }}
+          path: ${{ env.IMAGE_NAME }}
           name: ${{ env.IMAGE_NAME }}
           epoch: ${{ steps.def.outputs.git-commit-epoch }}
           upload: true
