@@ -95,7 +95,7 @@ jobs:
           [[ $ID == debian ]]
 
       - name: Artifact
-        uses: disputechalice/test-gh-actions/tree-to-artifact@main
+        uses: disputechalice/test-gh-actions/tree-to-artifact-tar@main
         with:
           path: ${{ steps.def.outputs.path }}
           name: ${{ env.IMAGE_NAME }}
