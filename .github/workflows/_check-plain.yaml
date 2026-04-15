@@ -9,10 +9,6 @@ on:
       git-ref:
         required: true
         type: string
-      source-name:
-        required: false
-        type: string
-        default: source
       package-name:
         required: false
         type: string
@@ -30,7 +26,6 @@ jobs:
     env:
       GIT_URL: ${{ inputs.git-url }}
       GIT_REF: ${{ inputs.git-ref }}
-      SOURCE: ${{ inputs.source-name }}
       PACKAGE: ${{ inputs.package-name }}
 
     outputs:
@@ -141,16 +136,16 @@ jobs:
       - id: check
         name: Check self-built repro package
         env:
-          DIR: ${{ steps.payload.outputs.target-path }}
+          SOURCE_DIR: ${{ steps.payload.outputs.target-path }}
         run: |
           # Build package from source, verify correct name/version/checksum
           trap 'echo >&2 E$? L$LINENO' ERR
-          : "${PACKAGE_DIR:?} ${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?}"
+          : "${SOURCE_DIR:?} ${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?}"
           : "${SOURCE_DATE_EPOCH:?} ${DPKG_DEB_COMPRESSOR_TYPE:?}"
 
           built_deb=$(mktemp /tmp/repro.XXXXXX.deb)
           export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
-          dpkg-deb --build --root-owner-group "$DIR/$DEB_PACKAGE" "$built_deb"
+          dpkg-deb --build --root-owner-group "$SOURCE_DIR/$DEB_PACKAGE" "$built_deb"
 
           dpkg-deb --contents "$built_deb"
 
