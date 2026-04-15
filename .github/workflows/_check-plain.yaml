@@ -9,7 +9,7 @@ on:
       git-ref:
         required: true
         type: string
-      package-name:
+      package:
         required: false
         type: string
         default: ''
@@ -26,10 +26,10 @@ jobs:
     env:
       GIT_REPO: ${{ inputs.git-repo }}
       GIT_REF: ${{ inputs.git-ref }}
-      PACKAGE: ${{ inputs.package-name }}
+      PACKAGE: ${{ inputs.package }}
 
     outputs:
-      source-artifact-name: ${{ steps.source.outputs.artifact }}
+      source-artifact: ${{ steps.source.outputs.artifact }}
       env-json: ${{ steps.context.outputs.env-json }}
       prov-json: ${{ steps.context.outputs.prov-json }}      
 
@@ -132,7 +132,7 @@ jobs:
         name: Get package payload
         uses: disputechalice/test-gh-actions/unarchive@main
         with:
-          artifact: ${{ needs.prep.outputs.source-artifact-name }}
+          artifact: ${{ needs.prep.outputs.source-artifact }}
 
       - id: check
         name: Check self-built repro package
