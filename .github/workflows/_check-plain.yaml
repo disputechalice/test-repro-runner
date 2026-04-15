@@ -138,11 +138,12 @@ jobs:
         with:
           artifact: ${{ needs.prep.outputs.source-artifact-name }}
           prefix: ${{ env.DEB_PACKAGE }}
+          target: ${{ env.DEB_PACKAGE }}
 
       - id: check
         name: Check self-built repro package
         env:
-          PACKAGE_DIR: ${{ steps.payload.outputs.target-path }}
+          PACKAGE_DIR: ${{ env.DEB_PACKAGE }}
         run: |
           # Build package from source, verify correct name/version/checksum
           trap 'echo >&2 E$? L$LINENO' ERR
