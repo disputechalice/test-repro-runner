@@ -69,11 +69,10 @@ jobs:
           EOF
 
       - id: buildmeta-var
-        name: Process buildmeta variables
+        name: Ingest buildmeta values
         uses: disputechalice/actions/env-to-json@main
         with:
-          source-file: ${{ steps.buildmeta-acq.outputs.path }}
-          variable-names: SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE DEB_SHA256 DEB_URL
+          source: ${{ steps.buildmeta-acq.outputs.path }}
 
       - id: context
         name: Resolve build context
