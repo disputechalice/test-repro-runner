@@ -149,6 +149,9 @@ jobs:
           : "${PACKAGE_DIR:?} ${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?}"
           : "${SOURCE_DATE_EPOCH:?} ${DPKG_DEB_COMPRESSOR_TYPE:?}"
 
+          # DEBUG
+          ls -laR "$PACKAGE_DIR"
+
           built_deb=$(mktemp /tmp/repro.XXXXXX.deb)
           export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
           dpkg-deb --build --root-owner-group "$PACKAGE_DIR" "$built_deb"
