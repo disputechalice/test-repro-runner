@@ -124,6 +124,7 @@ jobs:
           EOF
 
   report:
+    needs: image  
     runs-on: ubuntu-latest
 
     steps:
