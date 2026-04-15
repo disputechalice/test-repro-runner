@@ -3,7 +3,7 @@ name: "[Check plain package]"
 on:
   workflow_call:
     inputs:
-      git-url:
+      git-repo:
         required: true
         type: string
       git-ref:
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GIT_URL: ${{ inputs.git-url }}
+      GIT_REPO: ${{ inputs.git-repo }}
       GIT_REF: ${{ inputs.git-ref }}
       PACKAGE: ${{ inputs.package-name }}
 
@@ -38,7 +38,7 @@ jobs:
         name: Checkout source with applied permsrc
         uses: disputechalice/test-gh-actions/git-archive@main
         with:
-          git-repo: ${{ env.GIT_URL }}
+          git-repo: ${{ env.GIT_REPO }}
           git-ref: ${{ env.GIT_REF }}
           extract: true
 
@@ -94,7 +94,7 @@ jobs:
             }' <<< "$BUILDMETA")
 
           prov_json=$(jq -c \
-            --arg git_url "$GIT_URL" \
+            --arg git_url "$GIT_REPO" \
             --arg git_commit "$GIT_COMMIT" \
             --arg deb_package "$DEB_PACKAGE" \
             --arg deb_version "$DEB_VERSION" \
