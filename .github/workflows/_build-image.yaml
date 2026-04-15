@@ -3,7 +3,7 @@ name: "[Build image]"
 on:
   workflow_call:
     inputs:
-      git-url:
+      git-repo:
         required: true
         type: string
       git-ref:
@@ -27,7 +27,7 @@ defaults:
     shell: bash
 
 env:
-  GIT_URL: ${{ inputs.git-url }}
+  GIT_REPO: ${{ inputs.git-repo }}
   GIT_REF: ${{ inputs.git-ref }}
   IMAGE_NAME: ${{ inputs.image-name }}
   IMAGE_REPO: ghcr.io/${{ github.repository_owner }}/${{ inputs.image-name }}
@@ -59,7 +59,7 @@ jobs:
         name: Fetch definitions tree
         uses: disputechalice/test-gh-actions/git-archive@main
         with:
-          git-repo: ${{ env.GIT_URL }}
+          git-repo: ${{ env.GIT_REPO }}
           git-ref: ${{ env.GIT_REF }}
           extract: true
 
@@ -67,7 +67,7 @@ jobs:
         name: Build image
         env:
           SOURCE_DATE_EPOCH: ${{ steps.def.outputs.git-commit-epoch }}
-          IMAGE_SOURCE: ${{ inputs.git-url }}
+          IMAGE_SOURCE: ${{ inputs.git-repo }}
           IMAGE_REVISION: ${{ steps.def.outputs.git-commit }}
           BUILD: ${{ steps.def.outputs.path }}/${{ inputs.def-name }}/build
         run: |
@@ -153,7 +153,7 @@ jobs:
           pushed image: $IMAGE_DIGEST
 
           Image def from:
-          - $GIT_URL
+          - $GIT_REPO
           - $GIT_REF          
           - $GIT_COMMIT
 
