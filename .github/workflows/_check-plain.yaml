@@ -132,24 +132,26 @@ jobs:
       status: ${{ steps.check.outputs.status }}
 
     steps:
-      - name: Get package payload
+      - id: payload
+        name: Get package payload
         uses: disputechalice/test-gh-actions/tree-from-artifact-tar@main
         with:
           artifact: ${{ needs.prep.outputs.source-artifact-name }}
-          target: ${{ env.DEB_PACKAGE }}
           prefix: ${{ env.DEB_PACKAGE }}
 
       - id: check
         name: Check self-built repro package
+        env:
+          PACKAGE_DIR: ${{ steps.payload.outputs.target-path }}
         run: |
           # Build package from source, verify correct name/version/checksum
           trap 'echo >&2 E$? L$LINENO' ERR
-          : "${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?}"
+          : "${PACKAGE_DIR:?} ${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?}"
           : "${SOURCE_DATE_EPOCH:?} ${DPKG_DEB_COMPRESSOR_TYPE:?}"
 
           built_deb=$(mktemp /tmp/repro.XXXXXX.deb)
           export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
-          dpkg-deb --build --root-owner-group "$DEB_PACKAGE" "$built_deb"
+          dpkg-deb --build --root-owner-group "$PACKAGE_DIR" "$built_deb"
 
           built="$(dpkg-deb --show --showformat='${Package}|${Version}' "$built_deb")"
           [[ "$built" == "$DEB_PACKAGE|$DEB_VERSION" ]]
