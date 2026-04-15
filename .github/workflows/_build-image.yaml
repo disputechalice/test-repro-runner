@@ -34,11 +34,16 @@ env:
   IMAGE_TAGS: ${{ inputs.image-tags }}
 
 jobs:
-  create:
+  image:
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    outputs:
+      image-repo: ${{ steps.push.outputs.image-repo }}
+      image-digest: ${{ steps.push.outputs.image-digest }}
+      rootfs-diffids: ${{ steps.build.outputs.rootfs-diffids }}
+      git-commit: ${{ steps.def.outputs.git-commit }}
 
     steps:
       - name: Prep runner toolset
@@ -51,7 +56,7 @@ jobs:
             podman
 
       - id: def
-        name: Fetch def tree
+        name: Fetch definitions tree
         uses: disputechalice/test-gh-actions/tree-from-git-ref@main
         with:
           git-url: ${{ env.GIT_URL }}
@@ -74,9 +79,28 @@ jobs:
           EOF
 
       - name: Check image
+        env:
+          BS_YAML: ${{ steps.def.outputs.path }}/${{ inputs.def-name }}/bootstrap.yaml
         run: |
+          cat >&2 << EOF
+          $(yq '.mmdebstrap.suite' "$BS_YAML")
+          $(yq '.mmdebstrap.variant' "$BS_YAML")
+          $(yq '.mmdebstrap.mirrors' "$BS_YAML")
+          EOF
+          cat "$IMAGE_NAME/manifest" >&2
+
+          cp "$BS_YAML" "$IMAGE_NAME"
+
           source <(podman run --pull=never "$IMAGE_NAME" cat /etc/os-release)
           [[ $ID == debian ]]
+
+      - name: Artifact
+        uses: disputechalice/test-gh-actions/tree-to-artifact@main
+        with:
+          path: ${{ steps.def.outputs.path }}
+          name: ${{ env.IMAGE_NAME }}
+          epoch: ${{ steps.def.outputs.git-commit-epoch }}
+          upload: true
 
       - id: push
         name: Push to Registry
@@ -99,13 +123,16 @@ jobs:
           image-digest=$(cat digest)
           EOF
 
+  report:
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Summarize
         env:
-          ROOTFS_DIFFIDS: ${{ steps.build.outputs.rootfs-diffids }}
-          IMAGE_REPO: ${{ steps.push.outputs.image-repo }}
-          IMAGE_DIGEST: ${{ steps.push.outputs.image-digest }}
-          GIT_COMMIT: ${{ steps.def.outputs.git-commit }}
-          BS_YAML: ${{ steps.def.outputs.path }}/${{ inputs.def-name }}/bootstrap.yaml
+          IMAGE_REPO: ${{ needs.image.outputs.image-repo }}
+          IMAGE_DIGEST: ${{ needs.image.outputs.image-digest }}
+          ROOTFS_DIFFIDS: ${{ needs.image.outputs.rootfs-diffids }}
+          GIT_COMMIT: ${{ needs.image.outputs.git-commit }}
         run: |
           # Build markdown summary
           trap 'echo >&2 E$? L$LINENO' ERR
@@ -123,21 +150,11 @@ jobs:
 
           pushed image: $IMAGE_DIGEST
 
-          \`\`\`
-          $(yq '.mmdebstrap.suite' "$BS_YAML")
-          $(yq '.mmdebstrap.variant' "$BS_YAML")
-          $(yq '.mmdebstrap.mirrors' "$BS_YAML")
-          \`\`\`
-
           Image def from:
           - $GIT_URL
           - $GIT_REF          
           - $GIT_COMMIT
 
-          Manifest:
-
           EOF
-
-          cat "$IMAGE_NAME/manifest" >> "$REPORT" ||:
 
           tee -a "$GITHUB_STEP_SUMMARY" >&2 < "$REPORT"
