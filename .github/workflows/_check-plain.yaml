@@ -36,7 +36,7 @@ jobs:
     steps:
       - id: source
         name: Obtain source archive, extract to ingest metadata
-        uses: disputechalice/test-gh-actions/git-archive@main
+        uses: disputechalice/actions/git-archive@main
         with:
           git-repo: ${{ env.GIT_REPO }}
           git-ref: ${{ env.GIT_REF }}
@@ -70,7 +70,7 @@ jobs:
 
       - id: buildmeta-var
         name: Process buildmeta variables
-        uses: disputechalice/test-gh-actions/env-to-json@main
+        uses: disputechalice/actions/env-to-json@main
         with:
           source-file: ${{ steps.buildmeta-acq.outputs.path }}
           variable-names: SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE DEB_SHA256 DEB_URL
@@ -130,7 +130,7 @@ jobs:
     steps:
       - id: payload
         name: Get package payload
-        uses: disputechalice/test-gh-actions/unarchive@main
+        uses: disputechalice/actions/unarchive@main
         with:
           artifact: ${{ needs.prep.outputs.source-artifact }}
 
