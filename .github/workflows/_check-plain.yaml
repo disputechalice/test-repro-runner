@@ -138,7 +138,6 @@ jobs:
         with:
           artifact: ${{ needs.prep.outputs.source-artifact-name }}
           prefix: ${{ env.DEB_PACKAGE }}
-          target: /tmp/test-dir-here
 
       - id: check
         name: Check self-built repro package
