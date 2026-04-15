@@ -38,7 +38,7 @@ jobs:
         name: Checkout source with applied permsrc
         uses: disputechalice/test-gh-actions/git-archive@main
         with:
-          git-url: ${{ env.GIT_URL }}
+          git-repo: ${{ env.GIT_URL }}
           git-ref: ${{ env.GIT_REF }}
           extract: true
 
