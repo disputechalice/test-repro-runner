@@ -50,7 +50,7 @@ jobs:
         env:
           TARGET: ${{ steps.source.outputs.path }}
         run: |
-          # Identify .buildmeta env file in the source ...
+          # Identify .buildmeta env file in the source, ...
           # infer target package name/version,
           # ensure single file only (per package, if specified)
 
@@ -144,8 +144,9 @@ jobs:
         env:
           SOURCE_DIR: ${{ steps.source.outputs.path }}
         run: |
-          # Build package from source, i.a. verify checksum ...
+          # Build package from source, i.a. verify checksum: ...
           # - list contents, confirm correct name/version
+          # - verify built package checksum as expected
           # RUN: inside specific builder container
 
           trap 'echo >&2 E$? L$LINENO' ERR
@@ -184,8 +185,9 @@ jobs:
       - id: verify
         name: Verify distribution integrity
         run: |
-          # Retrieve released package, i.a. verify checksum ...
+          # Retrieve released package, i.a. verify checksum: ...
           # - confirm correct name/version
+          # - verify retrieved package checksum as expected
 
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?} ${DEB_URL:?}"
@@ -228,16 +230,11 @@ jobs:
           REPORT="$(mktemp /tmp/report.XXXXXX.md)"
 
           cat >> "$REPORT" << EOF
-
-          # Report
-          As of: **$(date --rfc-3339=seconds --utc)**
+          **Report** as of: **$(date --rfc-3339=seconds --utc)**
 
           | Package | *$DEB_PACKAGE* |
           |---------|----------------|
           | Version | *$DEB_VERSION* |
-          EOF
-
-          cat >> "$REPORT" << EOF
 
           ## Reproducible build
 
@@ -246,10 +243,6 @@ jobs:
           | Package checksum  | $DEB_SHA256           |          
           | Source Git URL    | [$GIT_URL]($GIT_URL)  |
           | Source Git commit | $GIT_COMMIT           |
-
-          EOF
-
-          cat >> "$REPORT" << EOF
 
           ## Distributed package
 
