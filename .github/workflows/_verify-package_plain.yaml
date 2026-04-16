@@ -47,8 +47,10 @@ jobs:
         env:
           TARGET: ${{ steps.source.outputs.path }}
         run: |
-          # Identify .buildmeta file in the source, infer target package name/version
-          # Ensure single file only (per package, if specified)
+          # Identify .buildmeta env file in the source ...
+          # infer target package name/version,
+          # ensure single file only (per package, if specified)
+
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${TARGET:?}"
 
@@ -83,8 +85,9 @@ jobs:
           BUILDMETA: ${{ steps.buildmeta-env.outputs.json }}
         run: |
           # Split build environment and provenance data, return as JSON
+
           trap 'echo >&2 E$? L$LINENO' ERR
-          : "${GIT_COMMIT:?}" "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${BUILDMETA:?}"
+          : "${GIT_COMMIT:?} ${DEB_PACKAGE:?} ${DEB_VERSION:?} ${BUILDMETA:?}"
 
           env_json=$(jq -c \
             '{
@@ -138,7 +141,10 @@ jobs:
         env:
           SOURCE_DIR: ${{ steps.source.outputs.path }}
         run: |
-          # Build package from source, verify correct name/version/checksum
+          # Build package from source, i.a. verify checksum ...
+          # - list contents, confirm correct name/version
+          # RUN: inside specific builder container
+
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${SOURCE_DIR:?} ${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?}"
           : "${SOURCE_DATE_EPOCH:?} ${DPKG_DEB_COMPRESSOR_TYPE:?}"
@@ -175,7 +181,9 @@ jobs:
       - id: verify
         name: Verify distribution integrity
         run: |
-          # Retrieve package from URL, verify correct name/version/checksum
+          # Retrieve released package, i.a. verify checksum ...
+          # - confirm correct name/version
+
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?} ${DEB_URL:?}"
 
@@ -209,6 +217,7 @@ jobs:
       - name: Report summary
         run: |
           # Build markdown summary, fail overall on any single fail
+
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${GIT_URL:?} ${GIT_COMMIT:?}"           
           : "${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_URL:?} ${DEB_SHA256:?}"
