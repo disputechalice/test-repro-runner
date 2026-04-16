@@ -60,7 +60,7 @@ jobs:
             podman
 
       - id: def
-        name: Fetch definitions tree
+        name: Fetch definitions
         uses: disputechalice/actions/git-archive@main
         with:
           base-name: def
@@ -71,7 +71,7 @@ jobs:
       - id: build
         name: Build image
         env:
-          SOURCE_DATE_EPOCH: ${{ steps.def.outputs.git-commit-epoch }}
+          SOURCE_DATE_EPOCH: ${{ steps.def.outputs.git-commit-ctime }}
           IMAGE_SOURCE: ${{ inputs.git-repo }}
           IMAGE_REVISION: ${{ steps.def.outputs.git-commit }}
           BUILD: ${{ steps.def.outputs.path }}/${{ inputs.def-name }}/build
