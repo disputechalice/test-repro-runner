@@ -146,7 +146,7 @@ jobs:
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${IMAGE_DIGEST:?}"
 
-          REPORT="$(mktemp --tmpdir --suffix.md report.XXXXXX)"
+          REPORT="$(mktemp --tmpdir --suffix=.md report.XXXXXX)"
 
           cat >> "$REPORT" << EOF
 

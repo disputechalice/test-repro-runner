@@ -232,7 +232,7 @@ jobs:
           : "${GIT_URL:?} ${GIT_COMMIT:?}"           
           : "${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_URL:?} ${DEB_SHA256:?}"
 
-          REPORT="$(mktemp --tmpdir --suffix.md report.XXXXXX)"
+          REPORT="$(mktemp --tmpdir --suffix=.md report.XXXXXX)"
 
           cat >> "$REPORT" << EOF
           **Report** as of: **$(date --rfc-3339=seconds --utc)**
