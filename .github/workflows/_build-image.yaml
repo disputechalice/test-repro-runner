@@ -63,6 +63,7 @@ jobs:
         name: Fetch definitions tree
         uses: disputechalice/actions/git-archive@main
         with:
+          base-name: ${{ env.IMAGE_NAME }}-def
           git-repo: ${{ env.GIT_REPO }}
           git-ref: ${{ env.GIT_REF }}
           extract: true
@@ -104,8 +105,8 @@ jobs:
         name: Archive manifest
         uses: disputechalice/actions/archive@main
         with:
-          path: ${{ env.IMAGE_NAME }}
           base-name: ${{ env.IMAGE_NAME }}-manifest
+          path: ${{ env.IMAGE_NAME }}
 
       - id: push
         name: Push to Registry

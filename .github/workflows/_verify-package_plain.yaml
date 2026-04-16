@@ -41,6 +41,7 @@ jobs:
         name: Obtain source archive, extract to ingest metadata
         uses: disputechalice/actions/git-archive@main
         with:
+          base-name: source
           git-repo: ${{ env.GIT_REPO }}
           git-ref: ${{ env.GIT_REF }}
           extract: true
