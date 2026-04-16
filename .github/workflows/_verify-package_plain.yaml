@@ -6,15 +6,12 @@ on:
       git-repo:
         description: "Git repository containing the package source(s)"
         required: true
-        type: string
       git-ref:
         description: "Git reference"
         required: true
-        type: string
       package-name:
         description: "Package name (optional)"
         required: false
-        type: string
         default: ''
 
 defaults:
@@ -238,11 +235,11 @@ jobs:
 
           ## Reproducible build
 
-          | Verified          | ${STATUS_REPRO:-fail} |
-          |-------------------|-----------------------|
-          | Package checksum  | $DEB_SHA256           |          
-          | Source Git URL    | [$GIT_URL]($GIT_URL)  |
-          | Source Git commit | $GIT_COMMIT           |
+          | Verified              | ${STATUS_REPRO:-fail} |
+          |-----------------------|-----------------------|
+          | Package checksum      | $DEB_SHA256           |          
+          | Source Git repository | [$GIT_URL]($GIT_URL)  |
+          | Source Git commit     | $GIT_COMMIT           |
 
           ## Distributed package
 
