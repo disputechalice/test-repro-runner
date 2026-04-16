@@ -68,8 +68,8 @@ jobs:
           version=${buildmeta_barename#*_}
           EOF
 
-      - id: buildmeta-var
-        name: Ingest buildmeta values
+      - id: buildmeta-env
+        name: Ingest buildmeta env file
         uses: disputechalice/actions/env-to-json@main
         with:
           source: ${{ steps.buildmeta-acq.outputs.path }}
@@ -80,9 +80,9 @@ jobs:
           GIT_COMMIT: ${{ steps.source.outputs.git-commit }}
           DEB_PACKAGE: ${{ steps.buildmeta-acq.outputs.package }}
           DEB_VERSION: ${{ steps.buildmeta-acq.outputs.version }}
-          BUILDMETA: ${{ steps.buildmeta-var.outputs.json }}
+          BUILDMETA: ${{ steps.buildmeta-env.outputs.json }}
         run: |
-          # Split build-environment and provenance data as JSON
+          # Split build environment and provenance data, return as JSON
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${GIT_COMMIT:?}" "${DEB_PACKAGE:?}" "${DEB_VERSION:?}" "${BUILDMETA:?}"
 
