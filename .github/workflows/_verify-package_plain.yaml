@@ -6,13 +6,16 @@ on:
       git-repo:
         description: "Git repository containing the package source(s)"
         required: true
+        type: string
       git-ref:
         description: "Git reference"
         required: true
+        type: string        
       package-name:
         description: "Package name (optional)"
         required: false
         default: ''
+        type: string        
 
 defaults:
   run:
