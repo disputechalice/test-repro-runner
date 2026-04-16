@@ -1,4 +1,4 @@
-name: "[Check plain package]"
+name: "[Verify package - plain]"
 
 on:
   workflow_call:
@@ -124,19 +124,19 @@ jobs:
       DPKG_DEB_COMPRESSOR_TYPE: ${{ fromJson(needs.prep.outputs.env-json).dpkg_deb_compressor_type }}
 
     outputs:
-      status: ${{ steps.check.outputs.status }}
+      status: ${{ steps.verify.outputs.status }}
 
     steps:
-      - id: payload
-        name: Get package payload
+      - id: source
+        name: Get package source
         uses: disputechalice/actions/unarchive@main
         with:
           artifact: ${{ needs.prep.outputs.source-artifact }}
 
-      - id: check
-        name: Check self-built repro package
+      - id: verify
+        name: Verify reproducible build
         env:
-          SOURCE_DIR: ${{ steps.payload.outputs.path }}
+          SOURCE_DIR: ${{ steps.source.outputs.path }}
         run: |
           # Build package from source, verify correct name/version/checksum
           trap 'echo >&2 E$? L$LINENO' ERR
@@ -169,11 +169,11 @@ jobs:
       DEB_URL: ${{ fromJson(needs.prep.outputs.prov-json).deb_url }}
 
     outputs:
-      status: ${{ steps.check.outputs.status }}
+      status: ${{ steps.verify.outputs.status }}
 
     steps:
-      - id: check
-        name: Check retrieved dist package
+      - id: verify
+        name: Verify distribution integrity
         run: |
           # Retrieve package from URL, verify correct name/version/checksum
           trap 'echo >&2 E$? L$LINENO' ERR
