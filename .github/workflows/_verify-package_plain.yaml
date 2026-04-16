@@ -68,7 +68,6 @@ jobs:
           buildmeta_filename=${buildmeta_path##*/}
           buildmeta_barename="${buildmeta_filename%%.buildmeta}"
 
-          >&2 echo "-- OUTPUT"
           >&2 tee -a "$GITHUB_OUTPUT" << EOF
           path=$buildmeta_path
           package=${buildmeta_barename%%_*}
@@ -114,7 +113,6 @@ jobs:
               deb_url
           }' <<< "$BUILDMETA")
 
-          >&2 echo "-- OUTPUT"
           >&2 tee -a "$GITHUB_OUTPUT" << EOF
           benv=$benv_json
           prov=$prov_json
@@ -169,7 +167,6 @@ jobs:
 
           sha256sum --check <<< "$DEB_SHA256  $built_deb"
 
-          >&2 echo "-- OUTPUT"
           >&2 tee -a "$GITHUB_OUTPUT" << EOF
           status=pass
           EOF
@@ -206,7 +203,6 @@ jobs:
 
           sha256sum --check <<< "$DEB_SHA256  $dist_deb"
 
-          >&2 echo "-- OUTPUT"
           >&2 tee -a "$GITHUB_OUTPUT" << EOF
           status=pass
           EOF
