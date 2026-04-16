@@ -256,7 +256,7 @@ jobs:
           | Package URL      | [$DEB_URL]($DEB_URL) |
           EOF
 
-          tee -a $GITHUB_STEP_SUMMARY >&2 < "$REPORT"
+          >&2 tee -a $GITHUB_STEP_SUMMARY < "$REPORT"
 
           [[ "$STATUS_REPRO" == "pass" ]]
           [[ "$STATUS_DIST" == "pass" ]]

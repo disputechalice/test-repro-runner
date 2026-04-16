@@ -79,7 +79,8 @@ jobs:
 
           buildah unshare "$BUILD"
 
-          tee -a "$GITHUB_OUTPUT" >&2 << EOF
+          >&2 echo "-- OUTPUT"
+          >&2 tee -a "$GITHUB_OUTPUT" << EOF
           rootfs-diffids=$(buildah inspect "$IMAGE_NAME" | jq -c '.OCIv1.rootfs.diff_ids')
           EOF
 
@@ -123,7 +124,8 @@ jobs:
             echo "Pushed with tag: $tag"
           done
 
-          tee -a "$GITHUB_OUTPUT" >&2 << EOF
+          >&2 echo "-- OUTPUT"
+          >&2 tee -a "$GITHUB_OUTPUT" << EOF
           image-repo=$IMAGE_REPO
           image-digest=$(cat digest)
           EOF
@@ -163,4 +165,4 @@ jobs:
 
           EOF
 
-          tee -a "$GITHUB_STEP_SUMMARY" >&2 < "$REPORT"
+          >&2 tee -a "$GITHUB_STEP_SUMMARY" < "$REPORT"
