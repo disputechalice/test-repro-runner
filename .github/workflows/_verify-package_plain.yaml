@@ -4,12 +4,15 @@ on:
   workflow_call:
     inputs:
       git-repo:
+        description: "Git repository containing the package source(s)"
         required: true
         type: string
       git-ref:
+        description: "Git reference"
         required: true
         type: string
-      package:
+      package-name:
+        description: "Package name (optional)"
         required: false
         type: string
         default: ''
@@ -26,12 +29,12 @@ jobs:
     env:
       GIT_REPO: ${{ inputs.git-repo }}
       GIT_REF: ${{ inputs.git-ref }}
-      PACKAGE: ${{ inputs.package }}
+      PACKAGE: ${{ inputs.package-name }}
 
     outputs:
       source-artifact: ${{ steps.source.outputs.artifact }}
-      env-json: ${{ steps.context.outputs.env-json }}
-      prov-json: ${{ steps.context.outputs.prov-json }}      
+      benv: ${{ steps.context.outputs.benv }}
+      prov: ${{ steps.context.outputs.prov }}      
 
     steps:
       - id: source
@@ -89,7 +92,7 @@ jobs:
           trap 'echo >&2 E$? L$LINENO' ERR
           : "${GIT_COMMIT:?} ${DEB_PACKAGE:?} ${DEB_VERSION:?} ${BUILDMETA:?}"
 
-          env_json=$(jq -c \
+          benv_json=$(jq -c \
             '{
               source_date_epoch,
               dpkg_deb_compressor_type
@@ -110,8 +113,8 @@ jobs:
           }' <<< "$BUILDMETA")
 
           tee -a "$GITHUB_OUTPUT" >&2 << EOF
-          env-json=$env_json
-          prov-json=$prov_json
+          benv=$benv_json
+          prov=$prov_json
           EOF
 
   repro:  
@@ -120,11 +123,11 @@ jobs:
     container: ghcr.io/disputechalice/builder-plain:latest
 
     env:
-      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov-json).deb_package }}
-      DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov-json).deb_version }}
-      DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov-json).deb_sha256 }}
-      SOURCE_DATE_EPOCH: ${{ fromJson(needs.prep.outputs.env-json).source_date_epoch }}
-      DPKG_DEB_COMPRESSOR_TYPE: ${{ fromJson(needs.prep.outputs.env-json).dpkg_deb_compressor_type }}
+      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov).deb_package }}
+      DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov).deb_version }}
+      DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov).deb_sha256 }}
+      SOURCE_DATE_EPOCH: ${{ fromJson(needs.prep.outputs.benv).source_date_epoch }}
+      DPKG_DEB_COMPRESSOR_TYPE: ${{ fromJson(needs.prep.outputs.benv).dpkg_deb_compressor_type }}
 
     outputs:
       status: ${{ steps.verify.outputs.status }}
@@ -169,10 +172,10 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov-json).deb_package }}
-      DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov-json).deb_version }}
-      DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov-json).deb_sha256 }}
-      DEB_URL: ${{ fromJson(needs.prep.outputs.prov-json).deb_url }}
+      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov).deb_package }}
+      DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov).deb_version }}
+      DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov).deb_sha256 }}
+      DEB_URL: ${{ fromJson(needs.prep.outputs.prov).deb_url }}
 
     outputs:
       status: ${{ steps.verify.outputs.status }}
@@ -204,12 +207,12 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GIT_URL: ${{ fromJson(needs.prep.outputs.prov-json).git_url }}
-      GIT_COMMIT: ${{ fromJson(needs.prep.outputs.prov-json).git_commit }}
-      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov-json).deb_package }}
-      DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov-json).deb_version }}
-      DEB_URL: ${{ fromJson(needs.prep.outputs.prov-json).deb_url }}
-      DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov-json).deb_sha256 }}
+      GIT_URL: ${{ fromJson(needs.prep.outputs.prov).git_url }}
+      GIT_COMMIT: ${{ fromJson(needs.prep.outputs.prov).git_commit }}
+      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov).deb_package }}
+      DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov).deb_version }}
+      DEB_URL: ${{ fromJson(needs.prep.outputs.prov).deb_url }}
+      DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov).deb_sha256 }}
       STATUS_REPRO: ${{ needs.repro.outputs.status }}
       STATUS_DIST: ${{ needs.dist.outputs.status }}
 
