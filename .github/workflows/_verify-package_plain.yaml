@@ -77,7 +77,7 @@ jobs:
         name: Ingest buildmeta env file
         uses: disputechalice/actions/env-to-json@main
         with:
-          source: ${{ steps.buildmeta-acq.outputs.path }}
+          env-file: ${{ steps.buildmeta-acq.outputs.path }}
 
       - id: context
         name: Resolve build context
