@@ -100,12 +100,12 @@ jobs:
           source <(podman run --pull=never "$IMAGE_NAME" cat /etc/os-release)
           [[ $ID == debian ]]
 
-      - name: Artifact
+      - id: manifest
+        name: Archive manifest
         uses: disputechalice/actions/archive@main
         with:
           path: ${{ env.IMAGE_NAME }}
-          base-name: ${{ env.IMAGE_NAME }}
-          mtime: ${{ steps.def.outputs.git-commit-epoch }}
+          base-name: ${{ env.IMAGE_NAME }}-manifest
 
       - id: push
         name: Push to Registry

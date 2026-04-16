@@ -32,7 +32,7 @@ jobs:
       PACKAGE: ${{ inputs.package-name }}
 
     outputs:
-      source-artifact: ${{ steps.source.outputs.artifact }}
+      source-artifact: ${{ steps.source.outputs.name }}
       benv: ${{ steps.context.outputs.benv }}
       prov: ${{ steps.context.outputs.prov }}      
 
