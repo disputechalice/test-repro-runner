@@ -160,7 +160,9 @@ jobs:
           export SOURCE_DATE_EPOCH DPKG_DEB_COMPRESSOR_TYPE
           dpkg-deb --build --root-owner-group "$SOURCE_DIR/$DEB_PACKAGE" "$built_deb"
 
+          echo "::group::contents"
           dpkg-deb --contents "$built_deb"
+          echo "::endgroup::"
 
           built="$(dpkg-deb --show --showformat='${Package}|${Version}' "$built_deb")"
           [[ "$built" == "$DEB_PACKAGE|$DEB_VERSION" ]]
