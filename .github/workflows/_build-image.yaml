@@ -104,9 +104,8 @@ jobs:
         uses: disputechalice/actions/archive@main
         with:
           path: ${{ env.IMAGE_NAME }}
-          name: ${{ env.IMAGE_NAME }}
-          epoch: ${{ steps.def.outputs.git-commit-epoch }}
-          upload: true
+          base-name: ${{ env.IMAGE_NAME }}
+          mtime: ${{ steps.def.outputs.git-commit-epoch }}
 
       - id: push
         name: Push to Registry
