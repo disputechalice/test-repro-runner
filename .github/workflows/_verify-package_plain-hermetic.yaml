@@ -118,52 +118,7 @@ jobs:
           prov=$prov_json
           EOF
 
-repro:
-  needs: prep
-  runs-on: ubuntu-latest
-
-  env:
-    DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov).deb_package }}
-    DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov).deb_version }}
-    DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov).deb_sha256 }}
-    SOURCE_DATE_EPOCH: ${{ fromJson(needs.prep.outputs.benv).source_date_epoch }}
-    DPKG_DEB_COMPRESSOR_TYPE: ${{ fromJson(needs.prep.outputs.benv).dpkg_deb_compressor_type }}
-
-  outputs:
-    status: ${{ steps.verify.outputs.status }}
-
-  steps:
-    - id: source
-      name: Get package source
-      uses: disputechalice/actions/fetch-archive@main
-      with:
-        name: ${{ needs.prep.outputs.source-artifact }}
-
-    - id: build
-      name: Hermetic build
-      uses: disputechalice/actions/repro-build@main
-      with:
-        image: ghcr.io/disputechalice/builder-plain:latest
-        source-dir: ${{ steps.source.outputs.extract-path }}
-        package: ${{ env.DEB_PACKAGE }}
-        version: ${{ env.DEB_VERSION }}
-        sha256: ${{ env.DEB_SHA256 }}
-        source-date-epoch: ${{ env.SOURCE_DATE_EPOCH }}
-        compressor: ${{ env.DPKG_DEB_COMPRESSOR_TYPE }}
-
-    - id: verify
-      name: Verify result exists
-      run: |
-        OUTDIR="${{ steps.build.outputs.output-dir }}"
-        : "${OUTDIR:?}"
-
-        echo "Output dir: $OUTDIR"
-        ls -l "$OUTDIR"
-
-        # you can re-check or just mark success
-        echo "status=pass" >> "$GITHUB_OUTPUT"
-
-  dist:
+  repro:
     needs: prep
     runs-on: ubuntu-latest
 
@@ -171,33 +126,78 @@ repro:
       DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov).deb_package }}
       DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov).deb_version }}
       DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov).deb_sha256 }}
-      DEB_URL: ${{ fromJson(needs.prep.outputs.prov).deb_url }}
+      SOURCE_DATE_EPOCH: ${{ fromJson(needs.prep.outputs.benv).source_date_epoch }}
+      DPKG_DEB_COMPRESSOR_TYPE: ${{ fromJson(needs.prep.outputs.benv).dpkg_deb_compressor_type }}
 
     outputs:
       status: ${{ steps.verify.outputs.status }}
 
     steps:
+      - id: source
+        name: Get package source
+        uses: disputechalice/actions/fetch-archive@main
+        with:
+          name: ${{ needs.prep.outputs.source-artifact }}
+
+      - id: build
+        name: Hermetic build
+        uses: disputechalice/actions/repro-build@main
+        with:
+          image: ghcr.io/disputechalice/builder-plain:latest
+          source-dir: ${{ steps.source.outputs.extract-path }}
+          package: ${{ env.DEB_PACKAGE }}
+          version: ${{ env.DEB_VERSION }}
+          sha256: ${{ env.DEB_SHA256 }}
+          source-date-epoch: ${{ env.SOURCE_DATE_EPOCH }}
+          compressor: ${{ env.DPKG_DEB_COMPRESSOR_TYPE }}
+
       - id: verify
-        name: Verify distribution integrity
+        name: Verify result exists
         run: |
-          # Retrieve released package, i.a. verify checksum: ...
-          # - confirm correct name/version
-          # - verify retrieved package checksum as expected
+          OUTDIR="${{ steps.build.outputs.output-dir }}"
+          : "${OUTDIR:?}"
 
-          trap 'echo >&2 E$? L$LINENO' ERR
-          : "${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?} ${DEB_URL:?}"
+          echo "Output dir: $OUTDIR"
+          ls -l "$OUTDIR"
 
-          dist_deb=$(mktemp /tmp/dist.XXXXXX.deb)
-          wget --no-verbose -O "$dist_deb" "$DEB_URL"
+          # you can re-check or just mark success
+          echo "status=pass" >> "$GITHUB_OUTPUT"
 
-          dist="$(dpkg-deb --show --showformat='${Package}|${Version}' "$dist_deb")"
-          [[ "$dist" == "$DEB_PACKAGE|$DEB_VERSION" ]]
+    dist:
+      needs: prep
+      runs-on: ubuntu-latest
 
-          sha256sum --check <<< "$DEB_SHA256  $dist_deb"
+      env:
+        DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov).deb_package }}
+        DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov).deb_version }}
+        DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov).deb_sha256 }}
+        DEB_URL: ${{ fromJson(needs.prep.outputs.prov).deb_url }}
 
-          >&2 tee -a "$GITHUB_OUTPUT" << EOF
-          status=pass
-          EOF
+      outputs:
+        status: ${{ steps.verify.outputs.status }}
+
+      steps:
+        - id: verify
+          name: Verify distribution integrity
+          run: |
+            # Retrieve released package, i.a. verify checksum: ...
+            # - confirm correct name/version
+            # - verify retrieved package checksum as expected
+
+            trap 'echo >&2 E$? L$LINENO' ERR
+            : "${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?} ${DEB_URL:?}"
+
+            dist_deb=$(mktemp /tmp/dist.XXXXXX.deb)
+            wget --no-verbose -O "$dist_deb" "$DEB_URL"
+
+            dist="$(dpkg-deb --show --showformat='${Package}|${Version}' "$dist_deb")"
+            [[ "$dist" == "$DEB_PACKAGE|$DEB_VERSION" ]]
+
+            sha256sum --check <<< "$DEB_SHA256  $dist_deb"
+
+            >&2 tee -a "$GITHUB_OUTPUT" << EOF
+            status=pass
+            EOF
 
   report:
     needs: [prep, repro, dist]
