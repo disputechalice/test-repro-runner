@@ -139,29 +139,17 @@ jobs:
         with:
           name: ${{ needs.prep.outputs.source-artifact }}
 
-      - id: build
-        name: Hermetic build
+      - id: verify
+        name: Hermetic build & verification
         uses: disputechalice/actions/repro-build@main
         with:
           image: ghcr.io/disputechalice/builder-plain:latest
           source-dir: ${{ steps.source.outputs.extract-path }}
+          source-date-epoch: ${{ env.SOURCE_DATE_EPOCH }}
+          compressor: ${{ env.DPKG_DEB_COMPRESSOR_TYPE }}
           package: ${{ env.DEB_PACKAGE }}
           version: ${{ env.DEB_VERSION }}
           sha256: ${{ env.DEB_SHA256 }}
-          source-date-epoch: ${{ env.SOURCE_DATE_EPOCH }}
-          compressor: ${{ env.DPKG_DEB_COMPRESSOR_TYPE }}
-
-      - id: verify
-        name: Verify result exists
-        run: |
-          OUTDIR="${{ steps.build.outputs.output-dir }}"
-          : "${OUTDIR:?}"
-
-          echo "Output dir: $OUTDIR"
-          ls -l "$OUTDIR"
-
-          # you can re-check or just mark success
-          echo "status=pass" >> "$GITHUB_OUTPUT"
 
   dist:
     needs: prep
