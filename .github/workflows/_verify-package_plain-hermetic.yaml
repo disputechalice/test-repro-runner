@@ -163,41 +163,41 @@ jobs:
           # you can re-check or just mark success
           echo "status=pass" >> "$GITHUB_OUTPUT"
 
-    dist:
-      needs: prep
-      runs-on: ubuntu-latest
+  dist:
+    needs: prep
+    runs-on: ubuntu-latest
 
-      env:
-        DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov).deb_package }}
-        DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov).deb_version }}
-        DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov).deb_sha256 }}
-        DEB_URL: ${{ fromJson(needs.prep.outputs.prov).deb_url }}
+    env:
+      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov).deb_package }}
+      DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov).deb_version }}
+      DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov).deb_sha256 }}
+      DEB_URL: ${{ fromJson(needs.prep.outputs.prov).deb_url }}
 
-      outputs:
-        status: ${{ steps.verify.outputs.status }}
+    outputs:
+      status: ${{ steps.verify.outputs.status }}
 
-      steps:
-        - id: verify
-          name: Verify distribution integrity
-          run: |
-            # Retrieve released package, i.a. verify checksum: ...
-            # - confirm correct name/version
-            # - verify retrieved package checksum as expected
+    steps:
+      - id: verify
+        name: Verify distribution integrity
+        run: |
+          # Retrieve released package, i.a. verify checksum: ...
+          # - confirm correct name/version
+          # - verify retrieved package checksum as expected
 
-            trap 'echo >&2 E$? L$LINENO' ERR
-            : "${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?} ${DEB_URL:?}"
+          trap 'echo >&2 E$? L$LINENO' ERR
+          : "${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?} ${DEB_URL:?}"
 
-            dist_deb=$(mktemp /tmp/dist.XXXXXX.deb)
-            wget --no-verbose -O "$dist_deb" "$DEB_URL"
+          dist_deb=$(mktemp /tmp/dist.XXXXXX.deb)
+          wget --no-verbose -O "$dist_deb" "$DEB_URL"
 
-            dist="$(dpkg-deb --show --showformat='${Package}|${Version}' "$dist_deb")"
-            [[ "$dist" == "$DEB_PACKAGE|$DEB_VERSION" ]]
+          dist="$(dpkg-deb --show --showformat='${Package}|${Version}' "$dist_deb")"
+          [[ "$dist" == "$DEB_PACKAGE|$DEB_VERSION" ]]
 
-            sha256sum --check <<< "$DEB_SHA256  $dist_deb"
+          sha256sum --check <<< "$DEB_SHA256  $dist_deb"
 
-            >&2 tee -a "$GITHUB_OUTPUT" << EOF
-            status=pass
-            EOF
+          >&2 tee -a "$GITHUB_OUTPUT" << EOF
+          status=pass
+          EOF
 
   report:
     needs: [prep, repro, dist]
