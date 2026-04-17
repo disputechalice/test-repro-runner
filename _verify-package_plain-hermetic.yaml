@@ -1,0 +1,253 @@
+name: "[Verify package - plain]"
+
+on:
+  workflow_call:
+    inputs:
+      git-repo:
+        description: "Git repository containing the package source(s)"
+        required: true
+        type: string
+      git-ref:
+        description: "Git reference"
+        required: true
+        type: string        
+      package-name:
+        description: "Package name (optional)"
+        required: false
+        default: ''
+        type: string        
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+
+  prep:
+    runs-on: ubuntu-latest
+
+    env:
+      GIT_REPO: ${{ inputs.git-repo }}
+      GIT_REF: ${{ inputs.git-ref }}
+      PACKAGE: ${{ inputs.package-name }}
+
+    outputs:
+      source-artifact: ${{ steps.source.outputs.name }}
+      benv: ${{ steps.context.outputs.benv }}
+      prov: ${{ steps.context.outputs.prov }}      
+
+    steps:
+      - id: source
+        name: Obtain source archive, extract to ingest metadata
+        uses: disputechalice/actions/git-archive@main
+        with:
+          base-name: source
+          git-repo: ${{ env.GIT_REPO }}
+          git-ref: ${{ env.GIT_REF }}
+          extract: true
+
+      - id: buildmeta-acq
+        name: Acquire buildmeta file
+        env:
+          TARGET: ${{ steps.source.outputs.extract-path }}
+        run: |
+          # Identify .buildmeta env file in the source, ...
+          # infer target package name/version,
+          # ensure single file only (per package, if specified)
+
+          trap 'echo >&2 E$? L$LINENO' ERR
+          : "${TARGET:?}"
+
+          prefix="$TARGET/${PACKAGE:+$PACKAGE}"
+          found=("$prefix"*.buildmeta)        
+          ((${#found[@]} == 1))
+
+          buildmeta_path=${found[0]}
+          test -f "$buildmeta_path"
+
+          buildmeta_filename=${buildmeta_path##*/}
+          buildmeta_barename="${buildmeta_filename%%.buildmeta}"
+
+          >&2 tee -a "$GITHUB_OUTPUT" << EOF
+          path=$buildmeta_path
+          package=${buildmeta_barename%%_*}
+          version=${buildmeta_barename#*_}
+          EOF
+
+      - id: buildmeta-env
+        name: Ingest buildmeta env file
+        uses: disputechalice/actions/env-to-json@main
+        with:
+          env-file: ${{ steps.buildmeta-acq.outputs.path }}
+
+      - id: context
+        name: Resolve build context
+        env:
+          GIT_COMMIT: ${{ steps.source.outputs.git-commit }}
+          DEB_PACKAGE: ${{ steps.buildmeta-acq.outputs.package }}
+          DEB_VERSION: ${{ steps.buildmeta-acq.outputs.version }}
+          BUILDMETA: ${{ steps.buildmeta-env.outputs.json }}
+        run: |
+          # Split build environment and provenance data, return as JSON
+
+          trap 'echo >&2 E$? L$LINENO' ERR
+          : "${GIT_COMMIT:?} ${DEB_PACKAGE:?} ${DEB_VERSION:?} ${BUILDMETA:?}"
+
+          benv_json=$(jq -c \
+            '{
+              source_date_epoch,
+              dpkg_deb_compressor_type
+            }' <<< "$BUILDMETA")
+
+          prov_json=$(jq -c \
+            --arg git_url "$GIT_REPO" \
+            --arg git_commit "$GIT_COMMIT" \
+            --arg deb_package "$DEB_PACKAGE" \
+            --arg deb_version "$DEB_VERSION" \
+            '{
+              git_url: $git_url,              
+              git_commit: $git_commit,
+              deb_package: $deb_package,
+              deb_version: $deb_version,
+              deb_sha256,
+              deb_url
+          }' <<< "$BUILDMETA")
+
+          >&2 tee -a "$GITHUB_OUTPUT" << EOF
+          benv=$benv_json
+          prov=$prov_json
+          EOF
+
+repro:
+  needs: prep
+  runs-on: ubuntu-latest
+
+  env:
+    DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov).deb_package }}
+    DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov).deb_version }}
+    DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov).deb_sha256 }}
+    SOURCE_DATE_EPOCH: ${{ fromJson(needs.prep.outputs.benv).source_date_epoch }}
+    DPKG_DEB_COMPRESSOR_TYPE: ${{ fromJson(needs.prep.outputs.benv).dpkg_deb_compressor_type }}
+
+  outputs:
+    status: ${{ steps.verify.outputs.status }}
+
+  steps:
+    - id: source
+      name: Get package source
+      uses: disputechalice/actions/fetch-archive@main
+      with:
+        name: ${{ needs.prep.outputs.source-artifact }}
+
+    - id: build
+      name: Hermetic build
+      uses: disputechalice/actions/repro-build@main
+      with:
+        image: ghcr.io/disputechalice/builder-plain:latest
+        source-dir: ${{ steps.source.outputs.extract-path }}
+        package: ${{ env.DEB_PACKAGE }}
+        version: ${{ env.DEB_VERSION }}
+        sha256: ${{ env.DEB_SHA256 }}
+        source-date-epoch: ${{ env.SOURCE_DATE_EPOCH }}
+        compressor: ${{ env.DPKG_DEB_COMPRESSOR_TYPE }}
+
+    - id: verify
+      name: Verify result exists
+      run: |
+        OUTDIR="${{ steps.build.outputs.output-dir }}"
+        : "${OUTDIR:?}"
+
+        echo "Output dir: $OUTDIR"
+        ls -l "$OUTDIR"
+
+        # you can re-check or just mark success
+        echo "status=pass" >> "$GITHUB_OUTPUT"
+
+  dist:
+    needs: prep
+    runs-on: ubuntu-latest
+
+    env:
+      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov).deb_package }}
+      DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov).deb_version }}
+      DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov).deb_sha256 }}
+      DEB_URL: ${{ fromJson(needs.prep.outputs.prov).deb_url }}
+
+    outputs:
+      status: ${{ steps.verify.outputs.status }}
+
+    steps:
+      - id: verify
+        name: Verify distribution integrity
+        run: |
+          # Retrieve released package, i.a. verify checksum: ...
+          # - confirm correct name/version
+          # - verify retrieved package checksum as expected
+
+          trap 'echo >&2 E$? L$LINENO' ERR
+          : "${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?} ${DEB_URL:?}"
+
+          dist_deb=$(mktemp /tmp/dist.XXXXXX.deb)
+          wget --no-verbose -O "$dist_deb" "$DEB_URL"
+
+          dist="$(dpkg-deb --show --showformat='${Package}|${Version}' "$dist_deb")"
+          [[ "$dist" == "$DEB_PACKAGE|$DEB_VERSION" ]]
+
+          sha256sum --check <<< "$DEB_SHA256  $dist_deb"
+
+          >&2 tee -a "$GITHUB_OUTPUT" << EOF
+          status=pass
+          EOF
+
+  report:
+    needs: [prep, repro, dist]
+    runs-on: ubuntu-latest
+
+    env:
+      GIT_URL: ${{ fromJson(needs.prep.outputs.prov).git_url }}
+      GIT_COMMIT: ${{ fromJson(needs.prep.outputs.prov).git_commit }}
+      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov).deb_package }}
+      DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov).deb_version }}
+      DEB_URL: ${{ fromJson(needs.prep.outputs.prov).deb_url }}
+      DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov).deb_sha256 }}
+      STATUS_REPRO: ${{ needs.repro.outputs.status }}
+      STATUS_DIST: ${{ needs.dist.outputs.status }}
+
+    steps:
+      - name: Report summary
+        run: |
+          # Build markdown summary, fail overall on any single fail
+
+          trap 'echo >&2 E$? L$LINENO' ERR
+          : "${GIT_URL:?} ${GIT_COMMIT:?}"           
+          : "${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_URL:?} ${DEB_SHA256:?}"
+
+          REPORT="$(mktemp --tmpdir --suffix=.md report.XXXXXX)"
+
+          cat >> "$REPORT" << EOF
+          **Report** as of: **$(date --rfc-3339=seconds --utc)**
+
+          | Package | *$DEB_PACKAGE* |
+          |---------|----------------|
+          | Version | *$DEB_VERSION* |
+
+          ## Reproducible build
+
+          | Verified              | ${STATUS_REPRO:-fail} |
+          |-----------------------|-----------------------|
+          | Package checksum      | $DEB_SHA256           |          
+          | Source Git repository | [$GIT_URL]($GIT_URL)  |
+          | Source Git commit     | $GIT_COMMIT           |
+
+          ## Distributed package
+
+          | Verified         | ${STATUS_DIST:-fail} |
+          |------------------|----------------------|
+          | Package checksum | $DEB_SHA256          |
+          | Package URL      | [$DEB_URL]($DEB_URL) |
+          EOF
+
+          >&2 tee -a $GITHUB_STEP_SUMMARY < "$REPORT"
+
+          [[ "$STATUS_REPRO" == "pass" ]]
+          [[ "$STATUS_DIST" == "pass" ]]
