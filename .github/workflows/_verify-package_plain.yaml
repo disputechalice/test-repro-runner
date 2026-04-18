@@ -95,8 +95,8 @@ jobs:
       DEB_VERSION: ${{ fromJson(needs.prep.outputs.context).deb.version }}
       DEB_URL: ${{ fromJson(needs.prep.outputs.context).deb.url }}
       DEB_SHA256: ${{ fromJson(needs.prep.outputs.context).deb.sha256 }}
-      STATUS_REPRO: ${{ needs.repro.outputs.status }}
-      STATUS_DIST: ${{ needs.dist.outputs.status }}
+      STATUS_REPRO: ${{ needs.repro.result }}
+      STATUS_DIST: ${{ needs.dist.result }}
 
     steps:
       - name: Report summary
