@@ -55,13 +55,6 @@ jobs:
     needs: prep
     runs-on: ubuntu-latest
 
-    env:
-      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.context).deb.package }}
-      DEB_VERSION: ${{ fromJson(needs.prep.outputs.context).deb.version }}
-      DEB_SHA256: ${{ fromJson(needs.prep.outputs.context).deb.sha256 }}
-      SOURCE_DATE_EPOCH: ${{ fromJson(needs.prep.outputs.context).env.source_date_epoch }}
-      DPKG_DEB_COMPRESSOR_TYPE: ${{ fromJson(needs.prep.outputs.context).env.dpkg_deb_compressor_type }}
-
     outputs:
       status: ${{ steps.verify.outputs.status }}
 
@@ -73,16 +66,12 @@ jobs:
           name: ${{ needs.prep.outputs.source-artifact }}
 
       - id: verify
-        name: Hermetic build & verification
+        name: Build verification
         uses: disputechalice/actions/repro-build@main
         with:
           image: ghcr.io/disputechalice/builder-plain:latest
           source-dir: ${{ steps.source.outputs.extract-path }}
-          source-date-epoch: ${{ env.SOURCE_DATE_EPOCH }}
-          compressor: ${{ env.DPKG_DEB_COMPRESSOR_TYPE }}
-          package: ${{ env.DEB_PACKAGE }}
-          version: ${{ env.DEB_VERSION }}
-          sha256: ${{ env.DEB_SHA256 }}
+          context: ${{ needs.prep.outputs.context }}
 
   dist:
     needs: prep
