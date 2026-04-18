@@ -90,14 +90,13 @@ jobs:
 
           cat >&2 << EOF
           $(yq '.mmdebstrap.mirrors' "$bconfig")
-          $(yq '.mmdebstrap.variant' "$bconfig")
           $(yq '.mmdebstrap.suite' "$bconfig")
+          $(yq '.mmdebstrap.variant' "$bconfig")
 
           ::group::manifest
           $(cat "$IMAGE_NAME/manifest")
           ::endgroup::
           EOF
-
 
           source <(podman run --pull=never "$IMAGE_NAME" cat /etc/os-release)
           [[ $ID == debian ]]
@@ -153,12 +152,13 @@ jobs:
           $IMAGE_REPO
           $IMAGE_TAGS
 
-          ## RootFS Diff IDs:
+          ### RootFS Diff IDs:
           $(echo "$ROOTFS_DIFFIDS" | jq -r '.[]')
 
-          pushed image: $IMAGE_DIGEST
+          ### Published image:
+          $IMAGE_DIGEST
 
-          Image def from:
+          ### Image def from:
           - $GIT_REPO
           - $GIT_REF          
           - $GIT_COMMIT
