@@ -65,7 +65,8 @@ jobs:
         name: Verify reproducible build
         uses: disputechalice/actions/repro-build@main
         with:
-          image: ghcr.io/disputechalice/builder-plain:latest
+          builder-image: ghcr.io/disputechalice/builder-plain:latest
+          build-script: build-plain
           source-dir: ${{ steps.source.outputs.extract-path }}
           context: ${{ needs.prep.outputs.context }}
 
