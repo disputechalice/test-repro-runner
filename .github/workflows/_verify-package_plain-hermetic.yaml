@@ -26,11 +26,6 @@ jobs:
   prep:
     runs-on: ubuntu-latest
 
-    env:
-      GIT_REPO: ${{ inputs.git-repo }}
-      GIT_REF: ${{ inputs.git-ref }}
-      PACKAGE: ${{ inputs.package-name }}
-
     outputs:
       source-artifact: ${{ steps.source.outputs.name }}
       git-commit: ${{ steps.source.outputs.git-commit }}
@@ -38,15 +33,16 @@ jobs:
 
     steps:
       - id: source
-        name: Obtain source archive, extract to ingest metadata
+        name: Obtain source archive, extract local copy
         uses: disputechalice/actions/git-archive@main
         with:
           base-name: source
-          git-repo: ${{ env.GIT_REPO }}
-          git-ref: ${{ env.GIT_REF }}
+          git-repo: ${{ inputs.git-repo }}
+          git-ref: ${{ inputs.git-ref }}
           extract: true
 
       - id: context
+        name: Resolve context from .buildmeta file
         uses: disputechalice/actions/context-from-buildmeta@main
         with:
           source-dir: ${{ steps.source.outputs.extract-path }}
