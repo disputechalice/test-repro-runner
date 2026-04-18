@@ -85,15 +85,19 @@ jobs:
           EOF
 
       - name: Check image
-        env:
-          BCONFIG_YAML: ${{ inputs.def-name }}/config.yaml
         run: |
+          bconfig="$IMAGE_NAME/config.yaml"
+
           cat >&2 << EOF
-          $(yq '.mmdebstrap.suite' "$BCONFIG_YAML")
-          $(yq '.mmdebstrap.variant' "$BCONFIG_YAML")
-          $(yq '.mmdebstrap.mirrors' "$BCONFIG_YAML")
+          $(yq '.mmdebstrap.mirrors' "$bconfig")
+          $(yq '.mmdebstrap.variant' "$bconfig")
+          $(yq '.mmdebstrap.suite' "$bconfig")
+
+          ::group::manifest
+          $(cat "$IMAGE_NAME/manifest")
+          ::endgroup::
           EOF
-          cat "$IMAGE_NAME/manifest" >&2
+
 
           source <(podman run --pull=never "$IMAGE_NAME" cat /etc/os-release)
           [[ $ID == debian ]]
