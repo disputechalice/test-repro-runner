@@ -63,7 +63,7 @@ jobs:
 
       - id: verify
         name: Verify reproducible build
-        uses: disputechalice/actions/repro-build@main
+        uses: disputechalice/actions/verify-build@main
         with:
           builder-image: ghcr.io/disputechalice/builder-plain:latest
           build-script: build-plain
