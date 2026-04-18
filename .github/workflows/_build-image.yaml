@@ -86,16 +86,14 @@ jobs:
 
       - name: Check image
         env:
-          BS_YAML: ${{ steps.def.outputs.extract-path }}/${{ inputs.def-name }}/bootstrap.yaml
+          BCONFIG_YAML: ${{ steps.def.outputs.extract-path }}/${{ inputs.def-name }}/config.yaml
         run: |
           cat >&2 << EOF
-          $(yq '.mmdebstrap.suite' "$BS_YAML")
-          $(yq '.mmdebstrap.variant' "$BS_YAML")
-          $(yq '.mmdebstrap.mirrors' "$BS_YAML")
+          $(yq '.mmdebstrap.suite' "$BCONFIG_YAML")
+          $(yq '.mmdebstrap.variant' "$BCONFIG_YAML")
+          $(yq '.mmdebstrap.mirrors' "$BCONFIG_YAML")
           EOF
           cat "$IMAGE_NAME/manifest" >&2
-
-          cp "$BS_YAML" "$IMAGE_NAME"
 
           source <(podman run --pull=never "$IMAGE_NAME" cat /etc/os-release)
           [[ $ID == debian ]]
