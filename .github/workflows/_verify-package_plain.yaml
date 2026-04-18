@@ -73,37 +73,15 @@ jobs:
     needs: prep
     runs-on: ubuntu-latest
 
-    env:
-      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.context).deb.package }}
-      DEB_VERSION: ${{ fromJson(needs.prep.outputs.context).deb.version }}
-      DEB_SHA256: ${{ fromJson(needs.prep.outputs.context).deb.sha256 }}
-      DEB_URL: ${{ fromJson(needs.prep.outputs.context).deb.url }}
-
     outputs:
       status: ${{ steps.verify.outputs.status }}
 
     steps:
       - id: verify
         name: Verify distribution integrity
-        run: |
-          # Retrieve released package, i.a. verify checksum: ...
-          # - confirm correct name/version
-          # - verify retrieved package checksum as expected
-
-          trap 'echo >&2 E$? L$LINENO' ERR
-          : "${DEB_PACKAGE:?} ${DEB_VERSION:?} ${DEB_SHA256:?} ${DEB_URL:?}"
-
-          dist_deb=$(mktemp /tmp/dist.XXXXXX.deb)
-          wget --no-verbose -O "$dist_deb" "$DEB_URL"
-
-          dist="$(dpkg-deb --show --showformat='${Package}|${Version}' "$dist_deb")"
-          [[ "$dist" == "$DEB_PACKAGE|$DEB_VERSION" ]]
-
-          sha256sum --check <<< "$DEB_SHA256  $dist_deb"
-
-          >&2 tee -a "$GITHUB_OUTPUT" << EOF
-          status=pass
-          EOF
+        uses: disputechalice/actions/verify-dist@main
+        with:
+          context: ${{ needs.prep.outputs.context }}
 
   report:
     needs: [prep, repro, dist]
