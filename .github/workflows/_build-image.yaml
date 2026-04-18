@@ -86,7 +86,7 @@ jobs:
 
       - name: Check image
         env:
-          BCONFIG_YAML: ${{ steps.def.outputs.extract-path }}/${{ inputs.def-name }}/config.yaml
+          BCONFIG_YAML: ${{ inputs.def-name }}/config.yaml
         run: |
           cat >&2 << EOF
           $(yq '.mmdebstrap.suite' "$BCONFIG_YAML")
