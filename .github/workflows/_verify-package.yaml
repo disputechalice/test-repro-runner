@@ -1,4 +1,4 @@
-name: "[Verify package - plain]"
+name: "[Verify package]"
 
 on:
   workflow_call:
@@ -89,14 +89,15 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      R_REPRO: ${{ needs.repro.result }}
+      R_DIST: ${{ needs.dist.result }}
+
       GIT_URL: ${{ inputs.git-repo }}
       GIT_COMMIT: ${{ needs.prep.outputs.git-commit }}
       DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.context).deb.package }}
       DEB_VERSION: ${{ fromJson(needs.prep.outputs.context).deb.version }}
-      DEB_URL: ${{ fromJson(needs.prep.outputs.context).deb.url }}
       DEB_SHA256: ${{ fromJson(needs.prep.outputs.context).deb.sha256 }}
-      R_REPRO: ${{ needs.repro.result }}
-      R_DIST: ${{ needs.dist.result }}
+      DEB_URL: ${{ fromJson(needs.prep.outputs.context).deb.url }}
 
     steps:
       - name: Report summary

@@ -4,7 +4,7 @@ on:
 
 jobs:
   no-subscription:
-    uses: ./.github/workflows/_verify-package_plain.yaml
+    uses: ./.github/workflows/_verify-package.yaml
     with:
       git-repo: https://github.com/free-pmx/free-pmx-no-subscription.git
       git-ref: main
