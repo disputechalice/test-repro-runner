@@ -95,8 +95,8 @@ jobs:
       DEB_VERSION: ${{ fromJson(needs.prep.outputs.context).deb.version }}
       DEB_URL: ${{ fromJson(needs.prep.outputs.context).deb.url }}
       DEB_SHA256: ${{ fromJson(needs.prep.outputs.context).deb.sha256 }}
-      STATUS_REPRO: ${{ needs.repro.result }}
-      STATUS_DIST: ${{ needs.dist.result }}
+      R_REPRO: ${{ needs.repro.result }}
+      R_DIST: ${{ needs.dist.result }}
 
     steps:
       - name: Report summary
@@ -118,15 +118,15 @@ jobs:
 
           ## Reproducible build
 
-          | Verified              | ${STATUS_REPRO:-fail} |
-          |-----------------------|-----------------------|
-          | Package checksum      | $DEB_SHA256           |          
-          | Source Git repository | [$GIT_URL]($GIT_URL)  |
-          | Source Git commit     | $GIT_COMMIT           |
+          | Verification          | $R_REPRO             |
+          |-----------------------|----------------------|
+          | Package checksum      | $DEB_SHA256          |          
+          | Source Git repository | [$GIT_URL]($GIT_URL) |
+          | Source Git commit     | $GIT_COMMIT          |
 
           ## Distributed package
 
-          | Verified         | ${STATUS_DIST:-fail} |
+          | Verification     | $R_DIST              |
           |------------------|----------------------|
           | Package checksum | $DEB_SHA256          |
           | Package URL      | [$DEB_URL]($DEB_URL) |
@@ -134,5 +134,5 @@ jobs:
 
           >&2 tee -a "$GITHUB_STEP_SUMMARY" < "$REPORT"
 
-          [[ "$STATUS_REPRO" == "pass" ]]
-          [[ "$STATUS_DIST" == "pass" ]]
+          [[ "$R_REPRO" == "success" ]]
+          [[ "$R_DIST" == "success" ]]
