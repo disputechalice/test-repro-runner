@@ -47,7 +47,7 @@ jobs:
           extract: true
 
       - id: context
-        uses: disputechalice/actions/build-context@main
+        uses: disputechalice/actions/context-from-buildmeta@main
         with:
           source-dir: ${{ steps.source.outputs.extract-path }}
 
