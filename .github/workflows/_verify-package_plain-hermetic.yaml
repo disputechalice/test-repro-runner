@@ -33,8 +33,8 @@ jobs:
 
     outputs:
       source-artifact: ${{ steps.source.outputs.name }}
-      benv: ${{ steps.context.outputs.benv }}
-      prov: ${{ steps.context.outputs.prov }}      
+      git-commit: ${{ steps.source.outputs.git-commit }}
+      context: ${{ steps.context.outputs.json }}
 
     steps:
       - id: source
@@ -46,88 +46,21 @@ jobs:
           git-ref: ${{ env.GIT_REF }}
           extract: true
 
-      - id: buildmeta-acq
-        name: Acquire buildmeta file
-        env:
-          TARGET: ${{ steps.source.outputs.extract-path }}
-        run: |
-          # Identify .buildmeta env file in the source, ...
-          # infer target package name/version,
-          # ensure single file only (per package, if specified)
-
-          trap 'echo >&2 E$? L$LINENO' ERR
-          : "${TARGET:?}"
-
-          prefix="$TARGET/${PACKAGE:+$PACKAGE}"
-          found=("$prefix"*.buildmeta)        
-          ((${#found[@]} == 1))
-
-          buildmeta_path=${found[0]}
-          test -f "$buildmeta_path"
-
-          buildmeta_filename=${buildmeta_path##*/}
-          buildmeta_barename="${buildmeta_filename%%.buildmeta}"
-
-          >&2 tee -a "$GITHUB_OUTPUT" << EOF
-          path=$buildmeta_path
-          package=${buildmeta_barename%%_*}
-          version=${buildmeta_barename#*_}
-          EOF
-
-      - id: buildmeta-env
-        name: Ingest buildmeta env file
-        uses: disputechalice/actions/env-to-json@main
-        with:
-          env-file: ${{ steps.buildmeta-acq.outputs.path }}
-
       - id: context
-        name: Resolve build context
-        env:
-          GIT_COMMIT: ${{ steps.source.outputs.git-commit }}
-          DEB_PACKAGE: ${{ steps.buildmeta-acq.outputs.package }}
-          DEB_VERSION: ${{ steps.buildmeta-acq.outputs.version }}
-          BUILDMETA: ${{ steps.buildmeta-env.outputs.json }}
-        run: |
-          # Split build environment and provenance data, return as JSON
-
-          trap 'echo >&2 E$? L$LINENO' ERR
-          : "${GIT_COMMIT:?} ${DEB_PACKAGE:?} ${DEB_VERSION:?} ${BUILDMETA:?}"
-
-          benv_json=$(jq -c \
-            '{
-              source_date_epoch,
-              dpkg_deb_compressor_type
-            }' <<< "$BUILDMETA")
-
-          prov_json=$(jq -c \
-            --arg git_url "$GIT_REPO" \
-            --arg git_commit "$GIT_COMMIT" \
-            --arg deb_package "$DEB_PACKAGE" \
-            --arg deb_version "$DEB_VERSION" \
-            '{
-              git_url: $git_url,              
-              git_commit: $git_commit,
-              deb_package: $deb_package,
-              deb_version: $deb_version,
-              deb_sha256,
-              deb_url
-          }' <<< "$BUILDMETA")
-
-          >&2 tee -a "$GITHUB_OUTPUT" << EOF
-          benv=$benv_json
-          prov=$prov_json
-          EOF
+        uses: disputechalice/actions/build-context@main
+        with:
+          source-dir: ${{ steps.source.outputs.extract-path }}
 
   repro:
     needs: prep
     runs-on: ubuntu-latest
 
     env:
-      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov).deb_package }}
-      DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov).deb_version }}
-      DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov).deb_sha256 }}
-      SOURCE_DATE_EPOCH: ${{ fromJson(needs.prep.outputs.benv).source_date_epoch }}
-      DPKG_DEB_COMPRESSOR_TYPE: ${{ fromJson(needs.prep.outputs.benv).dpkg_deb_compressor_type }}
+      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.context).deb.package }}
+      DEB_VERSION: ${{ fromJson(needs.prep.outputs.context).deb.version }}
+      DEB_SHA256: ${{ fromJson(needs.prep.outputs.context).deb.sha256 }}
+      SOURCE_DATE_EPOCH: ${{ fromJson(needs.prep.outputs.context).env.source_date_epoch }}
+      DPKG_DEB_COMPRESSOR_TYPE: ${{ fromJson(needs.prep.outputs.context).env.dpkg_deb_compressor_type }}
 
     outputs:
       status: ${{ steps.verify.outputs.status }}
@@ -156,10 +89,10 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov).deb_package }}
-      DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov).deb_version }}
-      DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov).deb_sha256 }}
-      DEB_URL: ${{ fromJson(needs.prep.outputs.prov).deb_url }}
+      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.context).deb.package }}
+      DEB_VERSION: ${{ fromJson(needs.prep.outputs.context).deb.version }}
+      DEB_SHA256: ${{ fromJson(needs.prep.outputs.context).deb.sha256 }}
+      DEB_URL: ${{ fromJson(needs.prep.outputs.context).deb.url }}
 
     outputs:
       status: ${{ steps.verify.outputs.status }}
@@ -192,12 +125,12 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      GIT_URL: ${{ fromJson(needs.prep.outputs.prov).git_url }}
-      GIT_COMMIT: ${{ fromJson(needs.prep.outputs.prov).git_commit }}
-      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.prov).deb_package }}
-      DEB_VERSION: ${{ fromJson(needs.prep.outputs.prov).deb_version }}
-      DEB_URL: ${{ fromJson(needs.prep.outputs.prov).deb_url }}
-      DEB_SHA256: ${{ fromJson(needs.prep.outputs.prov).deb_sha256 }}
+      GIT_URL: ${{ inputs.git-repo }}
+      GIT_COMMIT: ${{ needs.prep.outputs.git-commit }}
+      DEB_PACKAGE: ${{ fromJson(needs.prep.outputs.context).deb.package }}
+      DEB_VERSION: ${{ fromJson(needs.prep.outputs.context).deb.version }}
+      DEB_URL: ${{ fromJson(needs.prep.outputs.context).deb.url }}
+      DEB_SHA256: ${{ fromJson(needs.prep.outputs.context).deb.sha256 }}
       STATUS_REPRO: ${{ needs.repro.outputs.status }}
       STATUS_DIST: ${{ needs.dist.outputs.status }}
 
@@ -235,7 +168,7 @@ jobs:
           | Package URL      | [$DEB_URL]($DEB_URL) |
           EOF
 
-          >&2 tee -a $GITHUB_STEP_SUMMARY < "$REPORT"
+          >&2 tee -a "$GITHUB_STEP_SUMMARY" < "$REPORT"
 
           [[ "$STATUS_REPRO" == "pass" ]]
           [[ "$STATUS_DIST" == "pass" ]]
