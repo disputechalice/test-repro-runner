@@ -15,15 +15,3 @@ jobs:
       def-name: plain
       image-name: builder-plain
       image-tags: "latest run-${{ github.run_id }}"
-
-  builder-inspect:
-    permissions:
-      contents: read
-      packages: write
-    uses: ./.github/workflows/_build-image.yaml
-    with:
-      git-repo: https://github.com/disputechalice/builder.git
-      git-ref: main
-      def-name: inspect
-      image-name: builder-inspect
-      image-tags: "latest run-${{ github.run_id }}"
