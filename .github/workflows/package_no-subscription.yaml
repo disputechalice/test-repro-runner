@@ -3,6 +3,8 @@ on:
   workflow_dispatch:
 
 jobs:
+  tester:
+    uses: disputechalice/actions/tester@main
   no-subscription:
     uses: ./.github/workflows/_verify-package.yaml
     with:
