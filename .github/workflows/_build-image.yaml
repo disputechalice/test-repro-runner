@@ -86,12 +86,16 @@ jobs:
 
       - name: Check image
         run: |
-          bconfig="$IMAGE_NAME/config.yaml"
+          config="$IMAGE_NAME/config.yaml"
 
           cat >&2 << EOF
-          $(yq '.mmdebstrap.mirrors' "$bconfig")
-          $(yq '.mmdebstrap.suite' "$bconfig")
-          $(yq '.mmdebstrap.variant' "$bconfig")
+          $(yq '.mmdebstrap.mirrors' "$config")
+          $(yq '.mmdebstrap.suite' "$config")
+          $(yq '.mmdebstrap.variant' "$config")
+
+          ::group::config.yaml
+          $(cat "$IMAGE_NAME/config.yaml")
+          ::endgroup::
 
           ::group::manifest
           $(cat "$IMAGE_NAME/manifest")
