@@ -16,7 +16,7 @@ jobs:
       image-name: builder-plain
       image-tags: "latest run-${{ github.run_id }}"
 
-  inspect:
+  inspector:
     permissions:
       contents: read
       packages: write
