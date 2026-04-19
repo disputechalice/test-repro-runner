@@ -32,6 +32,10 @@ jobs:
       context: ${{ steps.context.outputs.json }}
 
     steps:
+
+      - id: tester
+        uses: disputechalice/actions/tester@main
+
       - id: source
         name: Obtain source archive, extract local copy
         uses: disputechalice/actions/git-archive@main
